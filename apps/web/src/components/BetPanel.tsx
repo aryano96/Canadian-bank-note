@@ -386,7 +386,7 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
       </button>
 
       {autobet && (
-        <p className="hint center" role="status">
+        <p className="hint center autobet-status" role="status">
           {autobet.remaining === null ? t("auto.infinite") : t("auto.remaining", { count: autobet.remaining })}
         </p>
       )}

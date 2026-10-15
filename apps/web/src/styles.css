@@ -410,6 +410,20 @@ button:disabled {
   .controls {
     order: 2;
   }
+  /* On phones the Bet button sits right under the game, with the settings below it. */
+  .bet-panel .primary-action {
+    order: -4;
+  }
+  .bet-panel .autobet-status,
+  .bet-panel .topup {
+    order: -3;
+  }
+  .bet-panel .loonie-meter {
+    order: -2;
+  }
+  .bet-panel .shortcut {
+    display: none;
+  }
 }
 
 .panel {
@@ -1546,6 +1560,12 @@ button:disabled {
     left: auto;
     right: 0;
     transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .stage {
+    min-height: clamp(260px, 44vh, 400px);
   }
 }
 
