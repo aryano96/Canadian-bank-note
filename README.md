@@ -3,7 +3,7 @@
 **A provably fair crash game themed on Canadian banknote security printing.**
 Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
-Place a wager and the press starts printing. The multiplier climbs along an engraved guilloché curve. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **COUNTERFEIT DETECTED** and the wager is lost.
+Place a wager and the press starts printing. The multiplier climbs along an engraved guilloché curve. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
 
 ![Round in progress](docs/screenshots/running.png)
 
@@ -160,8 +160,8 @@ Errors always look like `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "
 
 ## Demo script (2 minutes)
 
-1. **Play:** bet $5 and cash out around 1.5x. Point out the payout readout, the AUTHENTIC stamp, and the dashed line showing where it would have crashed.
-2. **Lose one:** let a round run until COUNTERFEIT DETECTED appears.
+1. **Play:** bet $5 and cash out around 1.5x. Point out the payout readout, the CASHED OUT stamp, and the dashed line showing where it would have crashed.
+2. **Lose one:** let a round run until CRASHED appears.
 3. **Fairness:** open My bets, press Verify, and show both checks passing in the browser.
 4. **Idempotence:** run `npm test` and show the "retrying a bet with the same key does not double charge" test.
 5. **Autobet:** switch to Auto, set 5 bets at 1.50×, and start it.
