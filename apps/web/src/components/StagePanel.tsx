@@ -31,9 +31,9 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
         ? ""
         : `${lastSettled.status === "won" ? "win" : "loss"} ${settled ? "" : "dim"}`;
 
-  let status: string;
+  let status = "";
   if (phase === "placing") status = t("stage.starting");
-  else if (running) status = round!.autoCashOut ? t("stage.autoArmed", { multiplier: mult(round!.autoCashOut) }) : t("stage.running");
+  else if (running) status = round!.autoCashOut ? t("stage.autoArmed", { multiplier: mult(round!.autoCashOut) }) : "";
   else if (lastSettled?.status === "won") status = t("stage.cashedOut", { multiplier: mult(lastSettled.cashOutAt!) });
   else if (lastSettled?.status === "lost") status = t("stage.crashed", { multiplier: mult(lastSettled.crashPoint!) });
   else status = t("stage.idle");
@@ -57,7 +57,7 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
         <div className={`multiplier mono ${tone}`} data-testid="multiplier">
           {mult(shown)}
         </div>
-        <div className="stage-status">{status}</div>
+        {status && <div className="stage-status">{status}</div>}
         {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
         {settled?.status === "won" && (
           <div className="stage-potential mono win">{t("stage.profit", { amount: money(settled.payout - settled.wager) })}</div>

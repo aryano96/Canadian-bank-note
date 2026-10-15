@@ -1,6 +1,5 @@
 /** English strings. French must provide every key (enforced by the type in fr.ts). */
 export const en = {
-  "app.tagline": "Print money before the press jams.",
   "app.demoNotice": "Demo credits only. No real money.",
 
   "header.balance": "Balance",
@@ -19,7 +18,6 @@ export const en = {
 
   "stage.idle": "Place a bet to start the press",
   "stage.starting": "Inking the plates…",
-  "stage.running": "Printing",
   "stage.cashedOut": "Cashed out at {multiplier}",
   "stage.crashed": "Crashed at {multiplier}",
   "stage.stampWin": "Cashed out",

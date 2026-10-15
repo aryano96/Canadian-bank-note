@@ -187,13 +187,6 @@ button:disabled {
   font-style: italic;
 }
 
-.brand-tag {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .wallet {
   position: relative;
   display: flex;
@@ -1379,9 +1372,6 @@ button:disabled {
 @media (max-width: 700px) {
   .topbar-inner {
     grid-template-columns: 1fr auto;
-  }
-  .brand-tag {
-    display: none;
   }
   .header-actions {
     grid-column: 1 / -1;

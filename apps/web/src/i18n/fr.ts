@@ -2,7 +2,6 @@ import type { MessageKey } from "./en.ts";
 
 /** Français canadien. */
 export const fr: Record<MessageKey, string> = {
-  "app.tagline": "Imprimez de l'argent avant que la presse s'enraye.",
   "app.demoNotice": "Crédits de démonstration seulement. Aucun argent réel.",
 
   "header.balance": "Solde",
@@ -21,7 +20,6 @@ export const fr: Record<MessageKey, string> = {
 
   "stage.idle": "Placez une mise pour lancer la presse",
   "stage.starting": "Encrage des plaques…",
-  "stage.running": "Impression",
   "stage.cashedOut": "Encaissé à {multiplier}",
   "stage.crashed": "Écrasé à {multiplier}",
   "stage.stampWin": "Encaissé",

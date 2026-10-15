@@ -25,10 +25,7 @@ export function Header({ currencies, currency, balances, onCurrency, currencyLoc
           <svg className="brand-mark" viewBox="-1 -1 2 2" aria-hidden="true">
             <path d="M0-1L.12-.72.32-.8.25-.36.62-.62.55-.42.85-.36.68-.15.8.02.42.12.48.3.06.24.06.62-.06.62-.06.24-.48.3-.42.12-.8.02-.68-.15-.85-.36-.55-.42-.62-.62-.25-.36-.32-.8-.12-.72Z" />
           </svg>
-          <div>
-            <h1 className="brand-name">Mint Rush</h1>
-            <p className="brand-tag">{t("app.tagline")}</p>
-          </div>
+          <h1 className="brand-name">Mint Rush</h1>
         </div>
 
         <CurrencyPicker
