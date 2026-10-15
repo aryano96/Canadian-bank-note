@@ -25,6 +25,18 @@ const BUCKETS: [string, number][] = [
 ];
 
 /**
+ * Exact long-run return for "always cash out at target", including the
+ * Golden Loonie profit boost on every Nth round.
+ */
+export function theoreticalRtp(target: Hundredths, config: GameConfig): number {
+  const base = 1 - config.rng.houseEdge;
+  if (!config.bonus.enabled) return base;
+  const t = target / 100;
+  const goldenShare = 1 / config.bonus.goldenRoundEvery;
+  return base * (1 + goldenShare * config.bonus.goldenMultiplierBoost * ((t - 1) / t));
+}
+
+/**
  * Monte Carlo check of the configured economy: always cash out at `target`.
  * `random` is injectable so tests can be deterministic.
  */
@@ -60,7 +72,7 @@ export function simulate(
     wins,
     winRate: wins / rounds,
     rtp: returned / (rounds * wager),
-    theoreticalRtp: 1 - config.rng.houseEdge,
+    theoreticalRtp: theoreticalRtp(target, config),
     instantCrashRate: instant / rounds,
     medianCrash: sample[Math.floor(sample.length / 2)] ?? 100,
     distribution: BUCKETS.map(([bucket], i) => ({ bucket, share: counts[i]! / rounds })),
