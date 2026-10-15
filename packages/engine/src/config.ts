@@ -28,6 +28,7 @@ export const gameConfigSchema = z
     }),
     timing: z.object({
       growthRatePerSecond: z.number().positive().max(5),
+      accelerationPerSecond2: z.number().min(0).max(1).default(0),
       resultHoldMs: z.number().int().min(0),
     }),
     bonus: z.object({

@@ -41,7 +41,7 @@ npm run build:demo               # apps/web/dist-demo
 Other commands:
 
 ```bash
-npm test                         # 48 tests: engine, economy, API on both stores
+npm test                         # 49 tests: engine, economy, API on both stores
 npm run typecheck
 npm run simulate -- 1000000 2    # long-run economics of the current config
 ```
@@ -100,7 +100,7 @@ apps/web                  React UI, canvas stage, i18n catalogs, themes
 
 ### Design decisions
 
-- **The server is the authority, the client is a renderer.** The client never learns the crash point while a round is running. The multiplier is a pure function of time (`m(t) = e^(rate·t)`), so the client animates locally from a synced clock. The server pushes the exact settlement moment over Server-Sent Events.
+- **The server is the authority, the client is a renderer.** The client never learns the crash point while a round is running. The multiplier is a pure function of time (`m(t) = e^(rate·t + acceleration·t²)`, so the climb keeps speeding up), so the client animates locally from a synced clock. The server pushes the exact settlement moment over Server-Sent Events.
 - **The engine is pure.** Settlement takes `(round, time, config)` and returns an outcome. There are no clocks, randomness or I/O, so every rule is unit-tested. The server and the browser verifier import the *same* code.
 - **Money is integers.** All amounts are minor units (cents) and multipliers are integer hundredths. Payouts always round down, so floating-point error never touches a balance.
 - **Server idempotence.** `POST /api/bets` and `POST /api/rounds/:id/cashout` require an `Idempotency-Key`. Retries replay the stored response, and concurrent duplicates share one execution. The client retries network failures with the same key, so a double-click or a flaky connection can never double-charge.
@@ -124,7 +124,8 @@ Everything is in [`config/game.config.json`](config/game.config.json). It is val
 |---|---|---|
 | `rng.houseEdge` | `0.01` | RTP = 1 − edge |
 | `rng.maxMultiplier` | `1000` | Highest possible crash point |
-| `timing.growthRatePerSecond` | `0.06` | Curve speed (2x at ≈11.5 s) |
+| `timing.growthRatePerSecond` | `0.08` | Starting speed of the curve |
+| `timing.accelerationPerSecond2` | `0.003` | How fast the climb speeds up (2x at ≈6.9 s, 10x at ≈17 s) |
 | `betting.minBet` / `maxBet` / `presets` | cents | Bet limits and quick picks |
 | `betting.minAutoCashOut` | `1.01` | Lowest auto target |
 | `bonus.goldenRoundEvery` / `goldenMultiplierBoost` | `10` / `0.1` | Golden Loonie rounds |

@@ -21,7 +21,8 @@
     "maxMultiplier": 1000
   },
   "timing": {
-    "growthRatePerSecond": 0.06,
+    "growthRatePerSecond": 0.08,
+    "accelerationPerSecond2": 0.003,
     "resultHoldMs": 2500
   },
   "bonus": {

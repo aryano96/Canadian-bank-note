@@ -1,4 +1,4 @@
-import { elapsedFor, multiplierAt, type GameConfig } from "@mint-rush/engine";
+import { curveAt, elapsedFor, multiplierAt, type GameConfig } from "@mint-rush/engine";
 import { useEffect, useRef } from "react";
 import type { PublicRound } from "../api/types.ts";
 import { serverNow } from "../game/useLiveMultiplier.ts";
@@ -190,7 +190,7 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
         const pts: [number, number][] = [];
         for (let i = 0; i <= steps; i++) {
           const ms = (endMs * i) / steps;
-          pts.push([sx(ms), sy(Math.max(100, Math.exp((config.timing.growthRatePerSecond * ms) / 1000) * 100))]);
+          pts.push([sx(ms), sy(curveAt(ms, config) * 100)]);
         }
         const [tx, ty] = pts[pts.length - 1]!;
         tip.current = { x: tx, y: ty };
@@ -244,7 +244,7 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
           for (let i = 0; i <= 60; i++) {
             const ms = endMs + ((ghostMs - endMs) * i) / 60;
             const x = sx(ms);
-            const y = sy(Math.exp((config.timing.growthRatePerSecond * ms) / 1000) * 100);
+            const y = sy(curveAt(ms, config) * 100);
             if (i) ctx.lineTo(x, y);
             else ctx.moveTo(x, y);
           }
