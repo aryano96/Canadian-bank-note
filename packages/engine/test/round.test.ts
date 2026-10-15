@@ -21,6 +21,16 @@ describe("multiplier curve", () => {
       expect(multiplierAt(elapsedFor(m, config) - 0.01, config)).toBe(m - 1);
     }
   });
+
+  it("climbs faster the longer it runs", () => {
+    const step = (from: number, to: number) => elapsedFor(to, config) - elapsedFor(from, config);
+    // Each doubling takes less time than the one before.
+    expect(step(200, 400)).toBeLessThan(step(100, 200));
+    expect(step(400, 800)).toBeLessThan(step(200, 400));
+    // With no acceleration every doubling takes the same time.
+    const flat = { ...config, timing: { ...config.timing, accelerationPerSecond2: 0 } };
+    expect(elapsedFor(400, flat) - elapsedFor(200, flat)).toBeCloseTo(elapsedFor(200, flat), 6);
+  });
 });
 
 describe("settlement", () => {

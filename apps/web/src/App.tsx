@@ -1,5 +1,5 @@
-import type { GameConfig } from "@mint-rush/engine";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { withCurrency, type GameConfig } from "@mint-rush/engine";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api/client.ts";
 import type { PublicRound } from "./api/types.ts";
 import { BetPanel } from "./components/BetPanel.tsx";
@@ -17,12 +17,23 @@ import { I18nProvider, useI18n } from "./i18n/index.tsx";
 import { prefersReducedMotion, usePref } from "./lib/prefs.ts";
 import { sound } from "./lib/sound.ts";
 
+const THEMES = ["night", "paper"];
 const MILESTONES = [200, 500, 1000, 2500, 5000, 10000];
 type Tab = "bets" | "fairness" | "stats";
 
-function Game({ config }: { config: GameConfig }) {
+interface GameProps {
+  /** The config as served. */
+  base: GameConfig;
+  /** The same config with the selected wallet's rules active. */
+  config: GameConfig;
+  onCurrency: (code: string) => void;
+}
+
+function Game({ base, config, onCurrency }: GameProps) {
+  const code = config.currency.code;
   const { t, mult, money } = useI18n();
-  const [theme, setTheme] = usePref("theme", config.ui.theme);
+  const [savedTheme, setTheme] = usePref("theme", config.ui.theme);
+  const theme = THEMES.includes(savedTheme) ? savedTheme : "night";
   const [soundOn, setSoundOn] = usePref("sound", true);
   const [helpSeen, setHelpSeen] = usePref("helpSeen", false);
   const [helpOpen, setHelpOpen] = useState(!helpSeen);
@@ -54,7 +65,8 @@ function Game({ config }: { config: GameConfig }) {
         sound.start();
         pulse("down");
       } else if (e.type === "won") {
-        sound.win();
+        if (e.round.golden) sound.goldenWin();
+        else sound.win();
         pulse("up");
         setAnnouncement(t("a11y.won", { multiplier: mult(e.round.cashOutAt!), amount: money(e.round.payout) }));
       } else {
@@ -65,8 +77,16 @@ function Game({ config }: { config: GameConfig }) {
     [t, mult, money],
   );
 
-  const game = useGame(config, onEvent);
+  const game = useGame(base, onEvent);
   const running = game.round?.status === "running" && (game.phase === "running" || game.phase === "cashing");
+  const busy = running || game.phase === "placing";
+  const player = useMemo(() => game.player && { ...game.player, balance: game.player.balances[code] ?? 0 }, [game.player, code]);
+
+  // A round resumed after a reload plays in its own currency.
+  const roundCurrency = running ? game.round?.currency : undefined;
+  useEffect(() => {
+    if (roundCurrency && roundCurrency !== code) onCurrency(roundCurrency);
+  }, [roundCurrency, code, onCurrency]);
   const live = useLiveMultiplier(game.round, running, config);
 
   const onTick = useCallback(
@@ -107,7 +127,11 @@ function Game({ config }: { config: GameConfig }) {
         {t("bet.place")}
       </a>
       <Header
-        balance={game.player?.balance ?? null}
+        currencies={config.currencies}
+        currency={code}
+        balances={game.player?.balances ?? null}
+        onCurrency={onCurrency}
+        currencyLocked={busy}
         sound={soundOn}
         onSound={setSoundOn}
         theme={theme}
@@ -117,33 +141,37 @@ function Game({ config }: { config: GameConfig }) {
       />
 
       <main className="layout" id="play">
-        <div className="main-col">
-          <HistoryStrip history={game.history} />
-          <StagePanel
-            config={config}
-            round={game.round}
-            phase={game.phase}
-            live={live}
-            theme={theme}
-            reducedMotion={reducedMotion}
-            onTick={onTick}
-          />
+        <div className="game-shell">
+          <aside className="controls">
+            <BetPanel
+              key={code}
+              config={config}
+              player={player}
+              phase={game.phase}
+              round={game.round}
+              live={live}
+              onBet={(wager, auto) => game.placeBet(wager, auto, code)}
+              onCashOut={game.cashOut}
+              onTopUp={() => game.topUp(code)}
+              registerPrimary={(fn) => {
+                primaryRef.current = fn;
+              }}
+            />
+          </aside>
+          <div className="game-area">
+            <HistoryStrip history={game.history} />
+            <StagePanel
+              config={config}
+              round={game.round}
+              phase={game.phase}
+              live={live}
+              theme={theme}
+              reducedMotion={reducedMotion}
+              onTick={onTick}
+              roundsUntilGolden={game.player?.roundsUntilGolden ?? null}
+            />
+          </div>
         </div>
-        <aside className="side-col">
-          <BetPanel
-            config={config}
-            player={game.player}
-            phase={game.phase}
-            round={game.round}
-            live={live}
-            onBet={game.placeBet}
-            onCashOut={game.cashOut}
-            onTopUp={game.topUp}
-            registerPrimary={(fn) => {
-              primaryRef.current = fn;
-            }}
-          />
-        </aside>
 
         <section className="panel tabs-panel">
           <div className="tabs" role="tablist">
@@ -180,7 +208,7 @@ function Game({ config }: { config: GameConfig }) {
                 onSaveSeed={game.setClientSeed}
               />
             )}
-            {tab === "stats" && <StatsPanel refreshKey={settledCount} />}
+            {tab === "stats" && <StatsPanel refreshKey={settledCount} currency={code} />}
           </div>
         </section>
       </main>
@@ -235,9 +263,16 @@ export function App() {
       </div>
     );
   }
+  return <CurrencyScope config={config} />;
+}
+
+/** Holds the selected wallet so formatting, limits and bets all follow it. */
+function CurrencyScope({ config }: { config: GameConfig }) {
+  const [saved, setCurrency] = usePref("currency", config.currencies[0]!.code);
+  const active = useMemo(() => withCurrency(config, saved), [config, saved]);
   return (
-    <I18nProvider config={config}>
-      <Game config={config} />
+    <I18nProvider config={active}>
+      <Game base={config} config={active} onCurrency={setCurrency} />
     </I18nProvider>
   );
 }

@@ -65,6 +65,12 @@ class Sound {
     [784, 988, 1319].forEach((f, i) => this.tone(f, i * 0.07, 0.35, "sine", 0.1));
   }
 
+  /** A brighter chime with a coin shimmer, for Golden round wins. */
+  goldenWin() {
+    this.win();
+    [1568, 1976, 2637, 3136].forEach((f, i) => this.tone(f, 0.22 + i * 0.06, 0.4, "triangle", 0.05));
+  }
+
   lose() {
     this.stopHum();
     this.tone(110, 0, 0.5, "sawtooth", 0.1);

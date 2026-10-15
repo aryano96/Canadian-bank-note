@@ -43,7 +43,7 @@ export function FairnessPanel({ config, player, selected, locked, onSaveSeed }: 
 
       <dl className="kv">
         <dt>{t("fair.nextHash")}</dt>
-        <dd className="mono hash">{player?.nextServerSeedHash ?? "…"}</dd>
+        <dd className="code hash">{player?.nextServerSeedHash ?? "…"}</dd>
         <dt>{t("fair.nonce")}</dt>
         <dd className="mono">{player ? number(player.nonce) : "…"}</dd>
       </dl>
@@ -59,7 +59,7 @@ export function FairnessPanel({ config, player, selected, locked, onSaveSeed }: 
         <div className="input-row">
           <input
             id="client-seed"
-            className="mono"
+            className="code"
             value={seed}
             maxLength={64}
             disabled={locked}
@@ -77,7 +77,7 @@ export function FairnessPanel({ config, player, selected, locked, onSaveSeed }: 
         </p>
       </form>
 
-      <p className="formula mono">{t("fair.formula")}</p>
+      <p className="formula code">{t("fair.formula")}</p>
 
       <div className={`verify-card ${pass ? "pass" : result ? "fail" : ""}`} aria-live="polite">
         {!selected ? (
@@ -87,7 +87,7 @@ export function FairnessPanel({ config, player, selected, locked, onSaveSeed }: 
             <h3>{t("fair.verifyTitle", { nonce: selected.nonce })}</h3>
             <dl className="kv">
               <dt>{t("fair.serverSeed")}</dt>
-              <dd className="mono hash">{selected.serverSeed}</dd>
+              <dd className="code hash">{selected.serverSeed}</dd>
             </dl>
             {!result ? (
               <p className="hint">{t("fair.checking")}</p>

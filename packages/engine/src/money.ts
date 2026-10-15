@@ -1,10 +1,11 @@
 import type { GameConfig } from "./config.ts";
 
-export function formatMoney(minor: number, config: GameConfig, locale = "en-CA"): string {
-  const { minorUnits, symbol } = config.currency;
+/** `short` drops a crypto amount's trailing zeros (₿0.0001 rather than ₿0.00010000). */
+export function formatMoney(minor: number, config: GameConfig, locale = "en-CA", short = false): string {
+  const { minorUnits, symbol, kind } = config.currency;
   const value = minor / 10 ** minorUnits;
   const number = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: minorUnits,
+    minimumFractionDigits: short && kind === "crypto" ? 0 : minorUnits,
     maximumFractionDigits: minorUnits,
   }).format(value);
   // French Canadian convention puts the symbol after the amount.

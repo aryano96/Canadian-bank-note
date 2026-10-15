@@ -73,8 +73,8 @@ export class Api {
     return state;
   }
 
-  placeBet(wager: number, autoCashOut: number | null): Promise<RoundResult> {
-    return this.mutate("POST", "/api/bets", { wager, autoCashOut });
+  placeBet(wager: number, autoCashOut: number | null, currency: string): Promise<RoundResult> {
+    return this.mutate("POST", "/api/bets", { wager, autoCashOut, currency });
   }
 
   cashOut(roundId: string): Promise<RoundResult> {
@@ -89,16 +89,16 @@ export class Api {
     return this.request("GET", `/api/history?limit=${limit}`);
   }
 
-  stats(): Promise<Stats> {
-    return this.request("GET", "/api/stats");
+  stats(currency: string): Promise<Stats> {
+    return this.request("GET", `/api/stats?currency=${encodeURIComponent(currency)}`);
   }
 
   setClientSeed(clientSeed: string): Promise<PlayerState> {
     return this.request("PUT", "/api/seed", { clientSeed });
   }
 
-  topUp(): Promise<PlayerState> {
-    return this.request("POST", "/api/topup");
+  topUp(currency: string): Promise<PlayerState> {
+    return this.request("POST", "/api/topup", { currency });
   }
 
   simulate(target: number, rounds: number): Promise<Simulation> {

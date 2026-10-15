@@ -14,10 +14,11 @@
   "scripts": {
     "dev": "concurrently -n server,web -c yellow,cyan \"npm run dev -w @mint-rush/server\" \"npm run dev -w @mint-rush/web\"",
     "build": "npm run build -w @mint-rush/web",
-    "start": "npm run start -w @mint-rush/server",
     "test": "vitest run",
     "typecheck": "tsc -p packages/engine && tsc -p apps/server && tsc -p apps/web",
-    "simulate": "tsx packages/engine/scripts/simulate.ts"
+    "simulate": "tsx packages/engine/scripts/simulate.ts",
+    "build:demo": "npm run build:demo -w @mint-rush/web",
+    "start": "npm run start -w @mint-rush/server"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

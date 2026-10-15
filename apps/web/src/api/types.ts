@@ -2,6 +2,7 @@
 export interface PublicRound {
   id: string;
   nonce: number;
+  currency: string;
   wager: number;
   autoCashOut: number | null;
   golden: boolean;
@@ -18,7 +19,8 @@ export interface PublicRound {
 }
 
 export interface PlayerState {
-  balance: number;
+  /** Balance per currency code, in minor units. */
+  balances: Record<string, number>;
   clientSeed: string;
   nonce: number;
   nextServerSeedHash: string;
@@ -29,6 +31,7 @@ export interface PlayerState {
 }
 
 export interface Stats {
+  currency: string;
   rounds: number;
   wins: number;
   winRate: number;
@@ -41,6 +44,9 @@ export interface Stats {
   highestCrash: number | null;
   balanceSeries: { t: number; balance: number }[];
 }
+
+/** The player as the UI sees it: the selected wallet's balance pulled out. */
+export type PlayerView = PlayerState & { balance: number };
 
 export interface Simulation {
   rounds: number;
