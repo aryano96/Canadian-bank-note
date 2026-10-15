@@ -865,7 +865,7 @@ button:disabled {
 .stage {
   position: relative;
   flex: 1;
-  min-height: clamp(340px, 56vh, 540px);
+  min-height: clamp(340px, 52vh, 520px);
   overflow: hidden;
   isolation: isolate;
 }
@@ -1033,7 +1033,8 @@ button:disabled {
   gap: 4px;
 }
 .lanterns {
-  width: min(440px, 52%);
+  width: min(600px, 72%, calc((100vh - 300px) * 1.2));
+  min-width: min(320px, 92%);
   /* Rising: amber gold that the light inside (--lan-glow, set inline) brightens to white-gold. */
   --lan-main-light: #ffdc78;
   --lan-main-paper: #e9ae2a;
@@ -1797,7 +1798,7 @@ button:disabled {
 
 @media (max-width: 560px) {
   .stage {
-    min-height: clamp(260px, 44vh, 400px);
+    min-height: 320px;
   }
 }
 
@@ -1809,7 +1810,11 @@ button:disabled {
     top: 0;
   }
   .lanterns {
-    width: min(360px, 82%);
+    width: 92%;
+  }
+  .stamp {
+    bottom: 5%;
+    right: 5%;
   }
   .bars li {
     grid-template-columns: 80px 1fr 56px;

@@ -1,9 +1,9 @@
-import { curveAt, elapsedFor, multiplierAt, type GameConfig } from "@mint-rush/engine";
+import { multiplierAt, type GameConfig } from "@mint-rush/engine";
 import { useEffect, useRef } from "react";
 import type { PublicRound } from "../api/types.ts";
 import { serverNow } from "../game/useLiveMultiplier.ts";
 import type { Phase } from "../game/useGame.ts";
-import { drawGuilloche, mapleLeaf } from "./guilloche.ts";
+import { drawGuilloche } from "./guilloche.ts";
 import { readPalette, type StagePalette } from "./palette.ts";
 import { burst, driftSparkle, sparkleRing, stepParticles, type Particle } from "./particles.ts";
 
@@ -16,18 +16,19 @@ interface Props {
   onTick?: (multiplier: number) => void;
 }
 
-const PAD = { left: 52, right: 24, top: 24, bottom: 32 };
-
-function niceStep(range: number): number {
-  const raw = range / 4;
-  const pow = 10 ** Math.floor(Math.log10(raw));
-  const n = raw / pow;
-  return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * pow;
+/** Middle of the big lantern in canvas coordinates, so bursts come from the lantern itself. */
+function lanternCentre(canvas: HTMLCanvasElement, width: number, height: number) {
+  const svg = canvas.parentElement?.querySelector(".lanterns svg");
+  if (!svg) return { x: width / 2, y: height * 0.42 };
+  const c = canvas.getBoundingClientRect();
+  const r = svg.getBoundingClientRect();
+  // The main lantern sits at (200, 120) in the 400 x 268 viewBox.
+  return { x: r.left - c.left + r.width * 0.5, y: r.top - c.top + r.height * (120 / 268) };
 }
 
 /**
- * The printing-press stage: a canvas drawing the multiplier curve over an
- * engraved guilloché backdrop. Runs its own requestAnimationFrame loop and
+ * The printing-press stage: a canvas with the engraved guilloché backdrop and the
+ * sparks, coins and shakes around the lanterns. Runs its own requestAnimationFrame loop and
  * reads props through refs so React re-renders never interrupt the animation.
  */
 export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Props) {
@@ -37,10 +38,8 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
 
   const particles = useRef<Particle[]>([]);
   const shake = useRef(0);
-  const tip = useRef({ x: 0, y: 0 });
   const palette = useRef<StagePalette | null>(null);
   const bg = useRef<HTMLCanvasElement | null>(null);
-  const scale = useRef({ x: 8000, y: 200 });
 
   // Re-read colours and redraw the engraving when the theme changes.
   useEffect(() => {
@@ -57,9 +56,10 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
   // Celebrate or shatter when a round settles.
   const settledKey = round && round.status !== "running" ? `${round.id}:${round.status}` : null;
   useEffect(() => {
-    if (!settledKey || !round || !palette.current || reducedMotion) return;
+    const canvas = canvasRef.current;
+    if (!settledKey || !round || !palette.current || !canvas || reducedMotion) return;
     const p = palette.current;
-    const { x, y } = tip.current;
+    const { x, y } = lanternCentre(canvas, canvas.clientWidth, canvas.clientHeight);
     if (round.status === "lost") {
       particles.current.push(...burst(x, y, [p.loss, p.ink, p.holoA], 50, 6));
       shake.current = 8;
@@ -122,168 +122,14 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
       }
       if (bg.current) ctx.drawImage(bg.current, 0, 0, width, height);
 
-      // What portion of the curve to draw.
+      // Report the live multiplier; the lanterns draw it, the canvas only adds the backdrop and effects.
       const running = round && (phase === "running" || phase === "cashing" || phase === "placing") && round.status === "running";
-      let endMs = 0;
-      let endM = 100;
-      let ghostToM: number | null = null;
-      if (round && running) {
-        endMs = Math.max(0, serverNow() - round.startedAt);
-        endM = multiplierAt(endMs, config);
-        onTick?.(endM);
-      } else if (round && round.status !== "running") {
-        const final = round.status === "won" ? round.cashOutAt! : round.crashPoint ?? 100;
-        endM = final;
-        endMs = elapsedFor(final, config);
-        if (round.status === "won" && round.crashPoint && round.crashPoint > final) ghostToM = round.crashPoint;
-      }
-      const ghostMs = ghostToM ? elapsedFor(ghostToM, config) : 0;
-
-      // Smoothly re-scale the axes so the curve always has headroom.
-      const targetX = Math.max(8000, Math.max(endMs, ghostMs) * 1.18);
-      const targetY = Math.max(200, Math.max(endM, ghostToM ?? 0) * 1.18);
-      const ease = reducedMotion ? 1 : 0.12 * dt;
-      scale.current.x += (targetX - scale.current.x) * Math.min(1, ease);
-      scale.current.y += (targetY - scale.current.y) * Math.min(1, ease);
-
-      const plotW = width - PAD.left - PAD.right;
-      const plotH = height - PAD.top - PAD.bottom;
-      const sx = (ms: number) => PAD.left + (ms / scale.current.x) * plotW;
-      const sy = (m: number) => PAD.top + plotH - ((m - 100) / (scale.current.y - 100)) * plotH;
-
-      // Grid and axis labels.
-      ctx.font = "600 12px Inter, system-ui, sans-serif";
-      ctx.fillStyle = p.text;
-      ctx.strokeStyle = p.grid;
-      ctx.lineWidth = 1;
-      const yStep = niceStep(scale.current.y - 100);
-      for (let m = 100; m <= scale.current.y; m += yStep) {
-        const y = Math.round(sy(m)) + 0.5;
-        ctx.beginPath();
-        ctx.moveTo(PAD.left, y);
-        ctx.lineTo(width - PAD.right, y);
-        ctx.stroke();
-        ctx.textAlign = "right";
-        ctx.textBaseline = "middle";
-        ctx.fillText(`${(m / 100).toFixed(1)}×`, PAD.left - 8, y);
-      }
-      const xStep = niceStep(scale.current.x / 1000) * 1000;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
-      for (let ms = 0; ms <= scale.current.x; ms += xStep) {
-        ctx.fillText(`${Math.round(ms / 1000)}s`, sx(ms), height - PAD.bottom + 10);
-      }
-
-      if (round && endMs > 0) {
-        const golden = round.golden;
-        const lost = round.status === "lost";
-        const won = round.status === "won";
-        const grad = ctx.createLinearGradient(PAD.left, 0, width - PAD.right, 0);
-        if (lost || won) {
-          grad.addColorStop(0, lost ? p.loss : p.win);
-          grad.addColorStop(1, lost ? p.loss : p.win);
-        } else if (golden) {
-          grad.addColorStop(0, p.gold);
-          grad.addColorStop(1, p.holoC);
-        } else {
-          grad.addColorStop(0, p.holoA);
-          grad.addColorStop(0.55, p.holoB);
-          grad.addColorStop(1, p.holoC);
-        }
-
-        const steps = 140;
-        const pts: [number, number][] = [];
-        for (let i = 0; i <= steps; i++) {
-          const ms = (endMs * i) / steps;
-          pts.push([sx(ms), sy(curveAt(ms, config) * 100)]);
-        }
-        const [tx, ty] = pts[pts.length - 1]!;
-        tip.current = { x: tx, y: ty };
-
-        // Filled area with engraved micro-lines.
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(PAD.left, sy(100));
-        pts.forEach(([x, y]) => ctx.lineTo(x, y));
-        ctx.lineTo(tx, sy(100));
-        ctx.closePath();
-        ctx.clip();
-        const fill = ctx.createLinearGradient(0, ty, 0, sy(100));
-        fill.addColorStop(0, lost ? p.loss : won ? p.win : golden ? p.gold : p.holoB);
-        fill.addColorStop(1, "transparent");
-        ctx.globalAlpha = 0.4;
-        ctx.fillStyle = fill;
-        ctx.fillRect(PAD.left, ty, tx - PAD.left, sy(100) - ty);
-        ctx.globalAlpha = 0.08;
-        ctx.strokeStyle = lost ? p.loss : golden ? p.gold : p.holoA;
-        ctx.lineWidth = 0.7;
-        for (let x = PAD.left - plotH; x < tx; x += 6) {
-          ctx.beginPath();
-          ctx.moveTo(x, sy(100));
-          ctx.lineTo(x + plotH, sy(100) - plotH);
-          ctx.stroke();
-        }
-        ctx.restore();
-
-        // The curve itself, with a soft glow.
-        ctx.save();
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
-        ctx.strokeStyle = grad;
-        ctx.shadowColor = lost ? p.loss : won ? p.win : golden ? p.gold : p.holoB;
-        ctx.shadowBlur = 10;
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-        ctx.stroke();
-        ctx.restore();
-
-        // Where the round would have crashed after a cash-out.
-        if (ghostToM) {
-          ctx.save();
-          ctx.setLineDash([4, 6]);
-          ctx.strokeStyle = p.text;
-          ctx.globalAlpha = 0.6;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          for (let i = 0; i <= 60; i++) {
-            const ms = endMs + ((ghostMs - endMs) * i) / 60;
-            const x = sx(ms);
-            const y = sy(curveAt(ms, config) * 100);
-            if (i) ctx.lineTo(x, y);
-            else ctx.moveTo(x, y);
-          }
-          ctx.stroke();
-          ctx.setLineDash([]);
-          ctx.fillStyle = p.loss;
-          ctx.beginPath();
-          ctx.arc(sx(ghostMs), sy(ghostToM), 4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.restore();
-        }
-
-        // Maple leaf riding the tip, tilted along the curve.
-        if (!lost) {
-          const [px, py] = pts[pts.length - 2] ?? [tx - 1, ty];
-          const angle = Math.atan2(ty - py, tx - px);
-          ctx.save();
-          ctx.translate(tx, ty);
-          ctx.rotate(angle + Math.PI / 2);
-          const size = 13 + (running && !reducedMotion ? Math.sin(now / 120) * 1.5 : 0);
-          ctx.scale(size, size);
-          mapleLeaf(ctx);
-          ctx.shadowColor = golden ? p.gold : p.loss;
-          ctx.shadowBlur = 16 / size;
-          ctx.fillStyle = round.status === "won" ? p.win : golden ? p.gold : "#e0303f";
-          ctx.fill();
-          ctx.restore();
-        }
-      }
+      if (round && running) onTick?.(multiplierAt(Math.max(0, serverNow() - round.startedAt), config));
 
       // A few slow sparkles drift up through a running Golden round.
       if (round?.golden && running && !reducedMotion && Math.random() < 0.12 * dt) {
-        const sx0 = PAD.left + Math.random() * (width - PAD.left - PAD.right);
-        const sy0 = PAD.top + (0.35 + Math.random() * 0.65) * (height - PAD.top - PAD.bottom);
+        const sx0 = width * (0.1 + Math.random() * 0.8);
+        const sy0 = height * (0.35 + Math.random() * 0.6);
         particles.current.push(driftSparkle(sx0, sy0, Math.random() < 0.7 ? p.gold : "#fff8e1"));
       }
 

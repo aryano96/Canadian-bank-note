@@ -3,7 +3,7 @@
 **A provably fair crash game themed on Canadian banknote security printing.**
 Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
-Place a wager and the press starts printing. The multiplier climbs along an engraved guilloché curve, painted on a trio of paper lanterns that glow brighter gold as it rises, flash green when you cash out and burn red when it crashes. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
+Place a wager and the press starts printing. The multiplier is painted on a trio of paper lanterns hanging over an engraved guilloché backdrop. They glow brighter gold as it climbs, flash green when you cash out and burn red when it crashes. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
 
 ![Round in progress](docs/screenshots/running.png)
 
@@ -78,7 +78,7 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 flowchart LR
   subgraph Browser["apps/web (React + Canvas)"]
     UI[Components] --> Hook[useGame state machine]
-    Stage[Canvas stage<br/>guilloché + curve] --> Hook
+    Stage[Canvas stage<br/>guilloché + effects] --> Hook
     Hook --> Client[API client<br/>idempotency keys + retry]
     Verify[Verify panel] --> Engine1[engine]
   end
@@ -129,7 +129,7 @@ Everything is in [`config/game.config.json`](config/game.config.json). It is val
 |---|---|---|
 | `rng.houseEdge` | `0.01` | RTP = 1 − edge |
 | `rng.maxMultiplier` | `1000` | Highest possible crash point |
-| `timing.growthRatePerSecond` | `0.08` | Starting speed of the curve |
+| `timing.growthRatePerSecond` | `0.08` | Starting speed of the multiplier |
 | `timing.accelerationPerSecond2` | `0.003` | How fast the climb speeds up (2x at ≈6.9 s, 10x at ≈17 s) |
 | `currencies[]` | CAD, USD, GBP, BTC, ETH | One wallet each, with `symbol`, `kind` (fiat or crypto), `minorUnits`, `startingBalance`, `topUpAmount`, `minBet`, `maxBet` and `presets`. Amounts are in the smallest unit (cents, pence, satoshis). The first entry is the default. |
 | `betting.minAutoCashOut` | `1.01` | Lowest auto target |
@@ -160,7 +160,7 @@ Errors always look like `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "
 
 ## Demo script (2 minutes)
 
-1. **Play:** bet $5 and cash out around 1.5x. Point out the payout readout, the CASHED OUT stamp, and the dashed line showing where it would have crashed.
+1. **Play:** bet $5 and cash out around 1.5x. Point out the payout readout, the green lanterns and the CASHED OUT stamp; the bets table shows where it would have crashed.
 2. **Lose one:** let a round run until CRASHED appears.
 3. **Fairness:** open My bets, press Verify, and show both checks passing in the browser.
 4. **Idempotence:** run `npm test` and show the "retrying a bet with the same key does not double charge" test.
