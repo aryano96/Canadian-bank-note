@@ -26,6 +26,9 @@ export const fr: Record<MessageKey, string> = {
   "stage.stampLoss": "Crash",
   "stage.profit": "+{amount}",
   "stage.goldenBanner": "Manche Huard doré : +{boost} % de bonus sur le gain",
+  "stage.goldenNextTitle": "Prochaine manche : Huard doré",
+  "stage.goldenNextBody": "Chaque gain rapporte +{boost} % de bonus",
+  "stage.bonusChip": "Bonus +{boost} % {amount}",
   "stage.potential": "Encaissez maintenant pour {amount}",
   "stage.autoArmed": "Encaissement auto à {multiplier}",
 
@@ -56,6 +59,7 @@ export const fr: Record<MessageKey, string> = {
   "bet.auto": "Encaissement auto",
   "bet.autoHint": "Encaisse automatiquement lorsque le multiplicateur atteint cette valeur.",
   "bet.place": "Miser",
+  "bet.placeGolden": "Miser sur la manche dorée",
   "bet.placing": "Mise en cours…",
   "bet.cashOut": "Encaisser {amount}",
   "bet.cashingOut": "Encaissement…",
@@ -64,6 +68,8 @@ export const fr: Record<MessageKey, string> = {
   "bet.topUp": "Plus de crédits? Obtenez {amount}",
   "bet.goldenIn": "Huard doré dans {count} manches",
   "bet.goldenNext": "La prochaine manche est un Huard doré!",
+  "bet.goldenInOne": "Huard doré dans 1 manche",
+  "bet.goldenLive": "La manche Huard doré est en cours!",
   "bet.shortcut": "Appuyez sur Espace pour miser ou encaisser",
 
   "history.title": "Manches récentes",

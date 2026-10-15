@@ -4,6 +4,7 @@ import type { PlayerView, PublicRound } from "../api/types.ts";
 import type { Phase } from "../game/useGame.ts";
 import { useI18n } from "../i18n/index.tsx";
 import { usePref } from "../lib/prefs.ts";
+import { LoonieMeter } from "./LoonieMeter.tsx";
 
 interface Props {
   config: GameConfig;
@@ -143,16 +144,19 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
   else if (phase === "cashing") label = t("bet.cashingOut");
   else if (running && mode === "manual") label = t("bet.cashOut", { amount: money(computePayout(round!.wager, live, round!.golden, config).payout) });
   else if (mode === "auto") label = autobet ? t("auto.stop") : t("auto.start");
-  else label = t("bet.place");
+  else label = player?.nextRoundGolden ? t("bet.placeGolden") : t("bet.place");
 
-  const primaryClass = running && mode === "manual" ? "cash" : mode === "auto" && autobet ? "stop" : "";
+  const primaryClass =
+    running && mode === "manual"
+      ? round?.golden
+        ? "golden"
+        : "cash"
+      : mode === "auto" && autobet
+        ? "stop"
+        : !running && player?.nextRoundGolden
+          ? "golden-next"
+          : "";
   const primaryDisabled = mode === "auto" ? !autobet && !canBet : !running && !canBet;
-
-  const goldenHint = player?.nextRoundGolden
-    ? t("bet.goldenNext")
-    : player?.roundsUntilGolden
-      ? t("bet.goldenIn", { count: player.roundsUntilGolden })
-      : null;
 
   return (
     <section className="bet-panel" aria-label={t("bet.wager")}>
@@ -373,7 +377,7 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
       </div>
 
       <button
-        className={`primary-action ${primaryClass} ${round?.golden && running ? "golden" : ""}`}
+        className={`primary-action ${primaryClass}`}
         onClick={primary}
         disabled={primaryDisabled}
         data-testid="primary-action"
@@ -386,7 +390,13 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
           {autobet.remaining === null ? t("auto.infinite") : t("auto.remaining", { count: autobet.remaining })}
         </p>
       )}
-      {goldenHint && <p className={`golden-hint ${player?.nextRoundGolden ? "next" : ""}`}>{goldenHint}</p>}
+      {player && player.roundsUntilGolden !== null && (
+        <LoonieMeter
+          every={config.bonus.goldenRoundEvery}
+          until={player.roundsUntilGolden}
+          live={!!round?.golden && round.status === "running"}
+        />
+      )}
       {broke && (
         <button className="topup" onClick={onTopUp}>
           {t("bet.topUp", { amount: money(config.account.topUpAmount) })}

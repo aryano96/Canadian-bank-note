@@ -65,7 +65,8 @@ function Game({ base, config, onCurrency }: GameProps) {
         sound.start();
         pulse("down");
       } else if (e.type === "won") {
-        sound.win();
+        if (e.round.golden) sound.goldenWin();
+        else sound.win();
         pulse("up");
         setAnnouncement(t("a11y.won", { multiplier: mult(e.round.cashOutAt!), amount: money(e.round.payout) }));
       } else {
@@ -167,6 +168,7 @@ function Game({ base, config, onCurrency }: GameProps) {
               theme={theme}
               reducedMotion={reducedMotion}
               onTick={onTick}
+              roundsUntilGolden={game.player?.roundsUntilGolden ?? null}
             />
           </div>
         </div>

@@ -24,6 +24,9 @@ export const en = {
   "stage.stampLoss": "Crashed",
   "stage.profit": "+{amount}",
   "stage.goldenBanner": "Golden Loonie round: +{boost}% bonus on profit",
+  "stage.goldenNextTitle": "Golden Loonie round next",
+  "stage.goldenNextBody": "Every win pays +{boost}% bonus on profit",
+  "stage.bonusChip": "+{boost}% bonus {amount}",
   "stage.potential": "Cash out now for {amount}",
   "stage.autoArmed": "Auto cash-out at {multiplier}",
 
@@ -54,6 +57,7 @@ export const en = {
   "bet.auto": "Auto cash-out",
   "bet.autoHint": "Cash out automatically when the multiplier reaches this value.",
   "bet.place": "Bet",
+  "bet.placeGolden": "Bet the Golden round",
   "bet.placing": "Placing…",
   "bet.cashOut": "Cash out {amount}",
   "bet.cashingOut": "Cashing out…",
@@ -62,6 +66,8 @@ export const en = {
   "bet.topUp": "Out of credits? Get {amount} more",
   "bet.goldenIn": "Golden Loonie in {count} rounds",
   "bet.goldenNext": "Next round is a Golden Loonie!",
+  "bet.goldenInOne": "Golden Loonie in 1 round",
+  "bet.goldenLive": "Golden Loonie round is live!",
   "bet.shortcut": "Press Space to bet or cash out",
 
   "history.title": "Recent rounds",

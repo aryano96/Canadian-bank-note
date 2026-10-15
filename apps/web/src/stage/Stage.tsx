@@ -5,7 +5,7 @@ import { serverNow } from "../game/useLiveMultiplier.ts";
 import type { Phase } from "../game/useGame.ts";
 import { drawGuilloche, mapleLeaf } from "./guilloche.ts";
 import { readPalette, type StagePalette } from "./palette.ts";
-import { burst, stepParticles, type Particle } from "./particles.ts";
+import { burst, driftSparkle, sparkleRing, stepParticles, type Particle } from "./particles.ts";
 
 interface Props {
   config: GameConfig;
@@ -61,11 +61,16 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
     const p = palette.current;
     const { x, y } = tip.current;
     if (round.status === "lost") {
-      particles.current.push(...burst(x, y, [p.loss, p.ink, p.holoA], 70, 7));
-      shake.current = 14;
+      particles.current.push(...burst(x, y, [p.loss, p.ink, p.holoA], 50, 6));
+      shake.current = 8;
+    } else if (round.golden) {
+      // Golden cash-out: a shower of loonies with sparkles.
+      particles.current.push(...burst(x, y, [p.gold, p.holoC], 45, 7, "coin"));
+      particles.current.push(...sparkleRing(x, y, [p.gold, "#fff8e1", p.holoC], 28, 4));
+      particles.current.push(...burst(x, y, [p.gold, "#fff"], 50, 5));
     } else if (round.payout > round.wager) {
-      const colors = round.golden ? [p.gold, p.holoC, "#fff"] : [p.win, p.holoA, p.holoB, p.holoC];
-      particles.current.push(...burst(x, y, colors, round.golden ? 120 : 80, 6));
+      particles.current.push(...sparkleRing(x, y, [p.win, "#eaffea"], 22, 3.2));
+      particles.current.push(...burst(x, y, [p.win, p.holoA, p.holoB, p.holoC], 60, 6));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settledKey]);
@@ -273,6 +278,13 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
           ctx.fill();
           ctx.restore();
         }
+      }
+
+      // A few slow sparkles drift up through a running Golden round.
+      if (round?.golden && running && !reducedMotion && Math.random() < 0.12 * dt) {
+        const sx0 = PAD.left + Math.random() * (width - PAD.left - PAD.right);
+        const sy0 = PAD.top + (0.35 + Math.random() * 0.65) * (height - PAD.top - PAD.bottom);
+        particles.current.push(driftSparkle(sx0, sy0, Math.random() < 0.7 ? p.gold : "#fff8e1"));
       }
 
       if (particles.current.length) particles.current = stepParticles(ctx, particles.current, dt);

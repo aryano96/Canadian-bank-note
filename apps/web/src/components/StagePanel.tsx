@@ -13,9 +13,11 @@ interface Props {
   theme: string;
   reducedMotion: boolean;
   onTick: (m: number) => void;
+  /** Normal rounds left before the next Golden round (0: the next one is Golden). */
+  roundsUntilGolden: number | null;
 }
 
-export function StagePanel({ config, round, phase, live, theme, reducedMotion, onTick }: Props) {
+export function StagePanel({ config, round, phase, live, theme, reducedMotion, onTick, roundsUntilGolden }: Props) {
   const { t, mult, money } = useI18n();
   const running = round?.status === "running" && (phase === "running" || phase === "cashing");
   const settled = round && round.status !== "running" && phase === "result" ? round : null;
@@ -39,20 +41,35 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
   else status = t("stage.idle");
 
   const potential = running ? computePayout(round!.wager, live, round!.golden, config).payout : 0;
+  const boost = Math.round(config.bonus.goldenMultiplierBoost * 100);
+  // The stage edges warm up over the last few rounds before a Golden round.
+  const warmth = !running && roundsUntilGolden !== null && roundsUntilGolden <= 3 ? (4 - roundsUntilGolden) / 4 : 0;
+  const goldenNext = roundsUntilGolden === 0 && phase === "idle";
 
   return (
     <section
-      className={`stage ${round?.golden && (running || settled) ? "is-golden" : ""} ${running ? "is-running" : ""}`}
-      style={{ "--heat": heat } as React.CSSProperties}
+      className={`stage ${round?.golden && (running || settled) ? "is-golden" : ""} ${running ? "is-running" : ""} ${
+        settled?.status === "lost" ? "is-crashed" : ""
+      }`}
+      style={{ "--heat": heat, "--warmth": warmth } as React.CSSProperties}
       aria-label="Game"
     >
       <div className="holo-stripe" aria-hidden="true" />
       <Stage config={config} round={round} phase={phase} theme={theme} reducedMotion={reducedMotion} onTick={onTick} />
 
       {round?.golden && (running || settled) && (
-        <div className="golden-banner">{t("stage.goldenBanner", { boost: Math.round(config.bonus.goldenMultiplierBoost * 100) })}</div>
+        <div className="golden-banner">{t("stage.goldenBanner", { boost })}</div>
       )}
 
+      {goldenNext ? (
+        <div className="stage-overlay golden-next">
+          <div className={`loonie ${reducedMotion ? "still" : ""}`} aria-hidden="true">
+            <span>$1</span>
+          </div>
+          <div className="golden-next-title">{t("stage.goldenNextTitle")}</div>
+          <div className="stage-status">{t("stage.goldenNextBody", { boost })}</div>
+        </div>
+      ) : (
       <div className="stage-overlay">
         <div className={`multiplier mono ${tone}`} data-testid="multiplier">
           {mult(shown)}
@@ -62,7 +79,11 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
         {settled?.status === "won" && (
           <div className="stage-potential mono win">{t("stage.profit", { amount: money(settled.payout - settled.wager) })}</div>
         )}
+        {settled?.status === "won" && settled.bonus > 0 && (
+          <div className="bonus-chip mono">{t("stage.bonusChip", { boost, amount: money(settled.bonus) })}</div>
+        )}
       </div>
+      )}
 
       {settled && (
         <div key={settled.id} className={`stamp ${settled.status === "won" ? "stamp-win" : "stamp-loss"}`} aria-hidden="true">
