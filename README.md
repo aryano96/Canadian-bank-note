@@ -32,6 +32,12 @@ npm run build && npm start      # http://localhost:8787
 docker build -t mint-rush . && docker run -p 8787:8787 -v mint-data:/data mint-rush
 ```
 
+To build a static, server-less demo (the game service runs inside the page, for hosting on any static site):
+
+```bash
+npm run build:demo               # apps/web/dist-demo
+```
+
 Other commands:
 
 ```bash
