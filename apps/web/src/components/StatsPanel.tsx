@@ -78,15 +78,16 @@ function Distribution({ sim }: { sim: Simulation }) {
   );
 }
 
-export function StatsPanel({ refreshKey }: { refreshKey: number }) {
+export function StatsPanel({ refreshKey, currency }: { refreshKey: number; currency: string }) {
   const { t, money, mult, percent, number } = useI18n();
   const [stats, setStats] = useState<Stats | null>(null);
   const [sim, setSim] = useState<Simulation | null>(null);
   const [simulating, setSimulating] = useState(false);
 
   useEffect(() => {
-    api.stats().then(setStats, () => {});
-  }, [refreshKey]);
+    setStats(null);
+    api.stats(currency).then(setStats, () => {});
+  }, [refreshKey, currency]);
 
   const run = useCallback(async () => {
     setSimulating(true);

@@ -8,12 +8,17 @@ const SCHEMA = `
 CREATE TABLE IF NOT EXISTS accounts (
   id TEXT PRIMARY KEY,
   token_hash TEXT NOT NULL UNIQUE,
-  balance INTEGER NOT NULL CHECK (balance >= 0),
   client_seed TEXT NOT NULL,
   nonce INTEGER NOT NULL,
   next_server_seed TEXT NOT NULL,
   next_server_seed_hash TEXT NOT NULL,
   created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS wallets (
+  account_id TEXT NOT NULL REFERENCES accounts(id),
+  currency TEXT NOT NULL,
+  balance INTEGER NOT NULL CHECK (balance >= 0),
+  PRIMARY KEY (account_id, currency)
 );
 CREATE TABLE IF NOT EXISTS rounds (
   id TEXT PRIMARY KEY,
@@ -32,6 +37,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   payout INTEGER NOT NULL,
   bonus INTEGER NOT NULL,
   settled_at INTEGER,
+  currency TEXT NOT NULL,
   UNIQUE (account_id, nonce)
 );
 CREATE INDEX IF NOT EXISTS rounds_running ON rounds(status) WHERE status = 'running';
@@ -42,7 +48,8 @@ CREATE TABLE IF NOT EXISTS ledger (
   type TEXT NOT NULL,
   amount INTEGER NOT NULL,
   balance_after INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  currency TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ledger_account ON ledger(account_id, id);
 CREATE TABLE IF NOT EXISTS idempotency (
@@ -55,15 +62,33 @@ CREATE TABLE IF NOT EXISTS idempotency (
 );
 `;
 
+/**
+ * Databases created before multi-currency wallets kept one balance on the
+ * account row. Move it into a wallet and tag old rounds and ledger rows with
+ * the legacy currency.
+ */
+function migrate(db: DatabaseSyncType, legacyCurrency: string) {
+  const cols = (table: string) => (db.prepare(`PRAGMA table_info(${table})`).all() as Row[]).map((r) => r.name);
+  if (cols("accounts").includes("balance")) {
+    db.prepare(`INSERT OR IGNORE INTO wallets (account_id, currency, balance) SELECT id, ?, balance FROM accounts`).run(legacyCurrency);
+    db.exec(`ALTER TABLE accounts DROP COLUMN balance`);
+  }
+  for (const table of ["rounds", "ledger"]) {
+    if (!cols(table).includes("currency")) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN currency TEXT NOT NULL DEFAULT '${legacyCurrency.replace(/'/g, "")}'`);
+    }
+  }
+}
+
 // Loaded via require so bundlers and test runners don't try to resolve "sqlite" as a package.
 const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
 
 type Row = Record<string, unknown>;
 
-const toAccount = (r: Row): Account => ({
+const toAccount = (r: Row, wallets: Row[]): Account => ({
   id: r.id as string,
   tokenHash: r.token_hash as string,
-  balance: Number(r.balance),
+  balances: Object.fromEntries(wallets.map((w) => [w.currency as string, Number(w.balance)])),
   clientSeed: r.client_seed as string,
   nonce: Number(r.nonce),
   nextServerSeed: r.next_server_seed as string,
@@ -75,6 +100,7 @@ const toRound = (r: Row): RoundRecord => ({
   id: r.id as string,
   accountId: r.account_id as string,
   nonce: Number(r.nonce),
+  currency: r.currency as string,
   wager: Number(r.wager),
   autoCashOut: r.auto_cash_out === null ? null : Number(r.auto_cash_out),
   golden: Boolean(r.golden),
@@ -94,6 +120,7 @@ const roundParams = (r: RoundRecord) => ({
   id: r.id,
   account_id: r.accountId,
   nonce: r.nonce,
+  currency: r.currency,
   wager: r.wager,
   auto_cash_out: r.autoCashOut,
   golden: r.golden ? 1 : 0,
@@ -115,25 +142,29 @@ export class SqliteStore implements Store {
   private stmts: Record<string, StatementSync>;
   private depth = 0;
 
-  constructor(path: string) {
+  /** `legacyCurrency` is the currency that balances in an older database were held in. */
+  constructor(path: string, legacyCurrency = "CAD") {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     this.db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
     this.db.exec(SCHEMA);
+    migrate(this.db, legacyCurrency);
     const p = (sql: string) => this.db.prepare(sql);
     this.stmts = {
-      insertAccount: p(`INSERT INTO accounts VALUES (:id, :token_hash, :balance, :client_seed, :nonce, :next_server_seed, :next_server_seed_hash, :created_at)`),
+      insertAccount: p(`INSERT INTO accounts (id, token_hash, client_seed, nonce, next_server_seed, next_server_seed_hash, created_at) VALUES (:id, :token_hash, :client_seed, :nonce, :next_server_seed, :next_server_seed_hash, :created_at)`),
+      listWallets: p(`SELECT * FROM wallets WHERE account_id = ?`),
+      putWallet: p(`INSERT INTO wallets (account_id, currency, balance) VALUES (?, ?, ?) ON CONFLICT (account_id, currency) DO UPDATE SET balance = excluded.balance`),
       getAccount: p(`SELECT * FROM accounts WHERE id = ?`),
       getAccountByToken: p(`SELECT * FROM accounts WHERE token_hash = ?`),
-      updateAccount: p(`UPDATE accounts SET balance = :balance, client_seed = :client_seed, nonce = :nonce, next_server_seed = :next_server_seed, next_server_seed_hash = :next_server_seed_hash WHERE id = :id`),
-      insertRound: p(`INSERT INTO rounds VALUES (:id, :account_id, :nonce, :wager, :auto_cash_out, :golden, :crash_point, :server_seed, :server_seed_hash, :client_seed, :started_at, :status, :cash_out_at, :payout, :bonus, :settled_at)`),
+      updateAccount: p(`UPDATE accounts SET client_seed = :client_seed, nonce = :nonce, next_server_seed = :next_server_seed, next_server_seed_hash = :next_server_seed_hash WHERE id = :id`),
+      insertRound: p(`INSERT INTO rounds (id, account_id, nonce, currency, wager, auto_cash_out, golden, crash_point, server_seed, server_seed_hash, client_seed, started_at, status, cash_out_at, payout, bonus, settled_at) VALUES (:id, :account_id, :nonce, :currency, :wager, :auto_cash_out, :golden, :crash_point, :server_seed, :server_seed_hash, :client_seed, :started_at, :status, :cash_out_at, :payout, :bonus, :settled_at)`),
       updateRound: p(`UPDATE rounds SET status = :status, cash_out_at = :cash_out_at, payout = :payout, bonus = :bonus, settled_at = :settled_at WHERE id = :id`),
       getRound: p(`SELECT * FROM rounds WHERE id = ?`),
       getActiveRound: p(`SELECT * FROM rounds WHERE account_id = ? AND status = 'running' LIMIT 1`),
       listRunning: p(`SELECT * FROM rounds WHERE status = 'running'`),
       listRounds: p(`SELECT * FROM rounds WHERE account_id = ? ORDER BY nonce DESC LIMIT ?`),
-      addLedger: p(`INSERT INTO ledger (account_id, round_id, type, amount, balance_after, created_at) VALUES (?, ?, ?, ?, ?, ?)`),
-      listLedger: p(`SELECT * FROM ledger WHERE account_id = ? ORDER BY id DESC LIMIT ?`),
+      addLedger: p(`INSERT INTO ledger (account_id, round_id, type, currency, amount, balance_after, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`),
+      listLedger: p(`SELECT * FROM ledger WHERE account_id = ? AND currency = ? ORDER BY id DESC LIMIT ?`),
       getIdem: p(`SELECT * FROM idempotency WHERE account_id = ? AND key = ?`),
       putIdem: p(`INSERT INTO idempotency VALUES (?, ?, ?, ?, ?)`),
     };
@@ -159,31 +190,38 @@ export class SqliteStore implements Store {
     this.stmts.insertAccount!.run({
       id: a.id,
       token_hash: a.tokenHash,
-      balance: a.balance,
       client_seed: a.clientSeed,
       nonce: a.nonce,
       next_server_seed: a.nextServerSeed,
       next_server_seed_hash: a.nextServerSeedHash,
       created_at: a.createdAt,
     });
+    this.putWallets(a);
   }
   getAccount(id: string) {
     const r = this.stmts.getAccount!.get(id) as Row | undefined;
-    return r && toAccount(r);
+    return r && this.withWallets(r);
   }
   getAccountByTokenHash(tokenHash: string) {
     const r = this.stmts.getAccountByToken!.get(tokenHash) as Row | undefined;
-    return r && toAccount(r);
+    return r && this.withWallets(r);
   }
   updateAccount(a: Account) {
+    this.putWallets(a);
     this.stmts.updateAccount!.run({
       id: a.id,
-      balance: a.balance,
       client_seed: a.clientSeed,
       nonce: a.nonce,
       next_server_seed: a.nextServerSeed,
       next_server_seed_hash: a.nextServerSeedHash,
     });
+  }
+
+  private withWallets(r: Row): Account {
+    return toAccount(r, this.stmts.listWallets!.all(r.id as string) as Row[]);
+  }
+  private putWallets(a: Account) {
+    for (const [currency, balance] of Object.entries(a.balances)) this.stmts.putWallet!.run(a.id, currency, balance);
   }
 
   insertRound(r: RoundRecord) {
@@ -209,13 +247,14 @@ export class SqliteStore implements Store {
   }
 
   addLedgerEntry(e: LedgerEntry) {
-    this.stmts.addLedger!.run(e.accountId, e.roundId, e.type, e.amount, e.balanceAfter, e.createdAt);
+    this.stmts.addLedger!.run(e.accountId, e.roundId, e.type, e.currency, e.amount, e.balanceAfter, e.createdAt);
   }
-  listLedger(accountId: string, limit: number) {
-    return (this.stmts.listLedger!.all(accountId, limit) as Row[]).map((r) => ({
+  listLedger(accountId: string, currency: string, limit: number) {
+    return (this.stmts.listLedger!.all(accountId, currency, limit) as Row[]).map((r) => ({
       accountId: r.account_id as string,
       roundId: (r.round_id as string | null) ?? null,
       type: r.type as LedgerEntry["type"],
+      currency: r.currency as string,
       amount: Number(r.amount),
       balanceAfter: Number(r.balance_after),
       createdAt: Number(r.created_at),

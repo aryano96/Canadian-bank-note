@@ -5,10 +5,12 @@ import {
   computeCrashPoint,
   crashTime,
   evaluate,
+  findCurrency,
   isGoldenRound,
   randomSeed,
   roundsUntilGolden,
   sha256Hex,
+  withCurrency,
   type GameConfig,
   type Hundredths,
   type Outcome,
@@ -22,6 +24,7 @@ export type Clock = () => number;
 export interface PublicRound {
   id: string;
   nonce: number;
+  currency: string;
   wager: number;
   autoCashOut: Hundredths | null;
   golden: boolean;
@@ -38,7 +41,8 @@ export interface PublicRound {
 }
 
 export interface PlayerState {
-  balance: number;
+  /** Balance per currency code, in minor units. */
+  balances: Record<string, number>;
   clientSeed: string;
   nonce: number;
   nextServerSeedHash: string;
@@ -52,6 +56,7 @@ export function toPublicRound(r: RoundRecord): PublicRound {
   const base: PublicRound = {
     id: r.id,
     nonce: r.nonce,
+    currency: r.currency,
     wager: r.wager,
     autoCashOut: r.autoCashOut,
     golden: r.golden,
@@ -93,7 +98,7 @@ export class GameService {
     const account: Account = {
       id: crypto.randomUUID(),
       tokenHash: await sha256Hex(token),
-      balance: this.config.account.startingBalance,
+      balances: Object.fromEntries(this.config.currencies.map((c) => [c.code, c.startingBalance])),
       clientSeed: randomSeed(8),
       nonce: 0,
       nextServerSeed,
@@ -102,14 +107,17 @@ export class GameService {
     };
     this.store.transaction(() => {
       this.store.createAccount(account);
-      this.store.addLedgerEntry({
-        accountId: account.id,
-        roundId: null,
-        type: "topup",
-        amount: account.balance,
-        balanceAfter: account.balance,
-        createdAt: account.createdAt,
-      });
+      for (const [currency, balance] of Object.entries(account.balances)) {
+        this.store.addLedgerEntry({
+          accountId: account.id,
+          roundId: null,
+          type: "topup",
+          currency,
+          amount: balance,
+          balanceAfter: balance,
+          createdAt: account.createdAt,
+        });
+      }
     });
     return { token, account };
   }
@@ -127,7 +135,7 @@ export class GameService {
     const active = this.store.getActiveRound(accountId);
     const nextNonce = account.nonce + 1;
     return {
-      balance: account.balance,
+      balances: this.walletBalances(account),
       clientSeed: account.clientSeed,
       nonce: account.nonce,
       nextServerSeedHash: account.nextServerSeedHash,
@@ -149,20 +157,23 @@ export class GameService {
     return this.state(accountId);
   }
 
-  topUp(accountId: string): PlayerState {
+  topUp(accountId: string, currency?: string): PlayerState {
+    const { currency: cur, account: rules, betting } = this.rules(currency);
     this.settleIfDue(accountId);
     this.store.transaction(() => {
       const account = this.mustGetAccount(accountId);
-      if (account.balance >= this.config.betting.minBet || this.store.getActiveRound(accountId)) {
+      const current = account.balances[cur.code] ?? 0;
+      if (current >= betting.minBet || this.store.getActiveRound(accountId)) {
         throw new GameError("TOP_UP_NOT_NEEDED", "Top-ups are only available when you can no longer bet");
       }
-      const balance = account.balance + this.config.account.topUpAmount;
-      this.store.updateAccount({ ...account, balance });
+      const balance = current + rules.topUpAmount;
+      this.store.updateAccount({ ...account, balances: { ...account.balances, [cur.code]: balance } });
       this.store.addLedgerEntry({
         accountId,
         roundId: null,
         type: "topup",
-        amount: this.config.account.topUpAmount,
+        currency: cur.code,
+        amount: rules.topUpAmount,
         balanceAfter: balance,
         createdAt: this.now(),
       });
@@ -172,8 +183,9 @@ export class GameService {
 
   // ---- rounds ---------------------------------------------------------
 
-  async placeBet(accountId: string, wager: number, autoCashOut: Hundredths | null): Promise<PublicRound> {
-    const { betting } = this.config;
+  async placeBet(accountId: string, wager: number, autoCashOut: Hundredths | null, currency?: string): Promise<PublicRound> {
+    const { betting, currency: cur } = this.rules(currency);
+    const code = cur.code;
     if (wager < betting.minBet) throw new GameError("BET_TOO_SMALL", `Minimum bet is ${betting.minBet}`);
     if (wager > betting.maxBet) throw new GameError("BET_TOO_LARGE", `Maximum bet is ${betting.maxBet}`);
     const minAuto = Math.round(betting.minAutoCashOut * 100);
@@ -185,7 +197,7 @@ export class GameService {
     this.settleIfDue(accountId);
     const before = this.mustGetAccount(accountId);
     if (this.store.getActiveRound(accountId)) throw new GameError("ROUND_IN_PROGRESS", "A round is already running");
-    if (before.balance < wager) throw new GameError("INSUFFICIENT_FUNDS", "Not enough balance for this bet");
+    if ((before.balances[code] ?? 0) < wager) throw new GameError("INSUFFICIENT_FUNDS", "Not enough balance for this bet");
 
     // Hashing is async, so do it first, then commit atomically and re-check
     // nothing moved underneath us (a concurrent bet would have bumped the nonce).
@@ -201,13 +213,14 @@ export class GameService {
         throw new GameError("CONFLICT", "Account changed while placing the bet, please retry");
       }
       if (this.store.getActiveRound(accountId)) throw new GameError("ROUND_IN_PROGRESS", "A round is already running");
-      if (account.balance < wager) throw new GameError("INSUFFICIENT_FUNDS", "Not enough balance for this bet");
+      if ((account.balances[code] ?? 0) < wager) throw new GameError("INSUFFICIENT_FUNDS", "Not enough balance for this bet");
 
       const startedAt = this.now();
       const round: RoundRecord = {
         id: crypto.randomUUID(),
         accountId,
         nonce,
+        currency: code,
         wager,
         autoCashOut,
         golden: isGoldenRound(nonce, this.config),
@@ -222,10 +235,11 @@ export class GameService {
         bonus: 0,
         settledAt: null,
       };
-      const balance = account.balance - wager;
-      this.store.updateAccount({ ...account, balance, nonce, nextServerSeed, nextServerSeedHash });
+      const balance = (account.balances[code] ?? 0) - wager;
+      const balances = { ...account.balances, [code]: balance };
+      this.store.updateAccount({ ...account, balances, nonce, nextServerSeed, nextServerSeedHash });
       this.store.insertRound(round);
-      this.store.addLedgerEntry({ accountId, roundId: round.id, type: "bet", amount: -wager, balanceAfter: balance, createdAt: startedAt });
+      this.store.addLedgerEntry({ accountId, roundId: round.id, type: "bet", currency: code, amount: -wager, balanceAfter: balance, createdAt: startedAt });
       return round;
     });
 
@@ -254,14 +268,17 @@ export class GameService {
     return this.store.listRounds(accountId, limit).map(toPublicRound);
   }
 
-  stats(accountId: string) {
+  /** Lifetime numbers for one wallet. */
+  stats(accountId: string, currency?: string) {
+    const code = this.rules(currency).currency.code;
     this.settleIfDue(accountId);
-    const rounds = this.store.listRounds(accountId, 10_000).filter((r) => r.status !== "running");
+    const rounds = this.store.listRounds(accountId, 10_000).filter((r) => r.status !== "running" && r.currency === code);
     const wagered = rounds.reduce((s, r) => s + r.wager, 0);
     const returned = rounds.reduce((s, r) => s + r.payout, 0);
     const wins = rounds.filter((r) => r.status === "won");
-    const ledger = this.store.listLedger(accountId, 200).reverse();
+    const ledger = this.store.listLedger(accountId, code, 200).reverse();
     return {
+      currency: code,
       rounds: rounds.length,
       wins: wins.length,
       winRate: rounds.length ? wins.length / rounds.length : 0,
@@ -321,12 +338,13 @@ export class GameService {
       this.store.updateRound(updated);
       if (outcome.payout > 0) {
         const account = this.mustGetAccount(round.accountId);
-        const balance = account.balance + outcome.payout;
-        this.store.updateAccount({ ...account, balance });
+        const balance = (account.balances[round.currency] ?? 0) + outcome.payout;
+        this.store.updateAccount({ ...account, balances: { ...account.balances, [round.currency]: balance } });
         this.store.addLedgerEntry({
           accountId: account.id,
           roundId: round.id,
           type: "payout",
+          currency: round.currency,
           amount: outcome.payout,
           balanceAfter: balance,
           createdAt: outcome.settledAt,
@@ -342,6 +360,19 @@ export class GameService {
     const view = toPublicRound(settled);
     this.events.emit(`settled:${round.id}`, view);
     return view;
+  }
+
+  /** The config with `code`'s wallet rules active; rejects codes the config doesn't list. */
+  private rules(code: string | undefined): GameConfig {
+    if (code !== undefined && !findCurrency(this.config, code)) {
+      throw new GameError("VALIDATION_FAILED", `Unknown currency ${code}`);
+    }
+    return withCurrency(this.config, code);
+  }
+
+  /** Every configured wallet, including ones added to the config after the account was created. */
+  private walletBalances(account: Account): Record<string, number> {
+    return Object.fromEntries(this.config.currencies.map((c) => [c.code, account.balances[c.code] ?? 0]));
   }
 
   private mustGetAccount(id: string): Account {

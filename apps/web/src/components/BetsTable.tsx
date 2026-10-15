@@ -30,7 +30,7 @@ export function BetsTable({ history, onVerify }: Props) {
                 <td className="mono">
                   #{number(r.nonce)} {r.golden && <span className="tag gold">{t("bets.golden")}</span>}
                 </td>
-                <td className="num mono">{money(r.wager)}</td>
+                <td className="num mono">{money(r.wager, r.currency)}</td>
                 <td className="num mono">{r.cashOutAt ? mult(r.cashOutAt) : "–"}</td>
                 <td className="num mono">{r.crashPoint !== undefined ? mult(r.crashPoint) : "…"}</td>
                 <td className={`num mono ${r.status}`}>
@@ -40,7 +40,7 @@ export function BetsTable({ history, onVerify }: Props) {
                     <>
                       <span className="sr-only">{r.status === "won" ? t("bets.won") : t("bets.lost")} </span>
                       <span aria-hidden="true">{r.status === "won" ? "▲ " : "▼ "}</span>
-                      {money(Math.abs(profit))}
+                      {money(Math.abs(profit), r.currency)}
                     </>
                   )}
                 </td>

@@ -41,8 +41,8 @@ describe("golden rounds", () => {
 describe("config validation", () => {
   it("rejects nonsense with a readable message", () => {
     const bad = loadConfig((c) => {
-      c.betting.minBet = 10_000_000;
+      c.currencies[0]!.minBet = 10_000_000;
     });
-    expect(() => parseConfig(bad)).toThrow(/minBet must be <= betting.maxBet/);
+    expect(() => parseConfig(bad)).toThrow(/currencies\.0\.minBet: minBet must be <= maxBet/);
   });
 });

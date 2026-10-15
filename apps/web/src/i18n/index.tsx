@@ -1,4 +1,4 @@
-import { formatMoney, type GameConfig } from "@mint-rush/engine";
+import { formatMoney, withCurrency, type GameConfig } from "@mint-rush/engine";
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { en, type MessageKey } from "./en.ts";
 import { fr } from "./fr.ts";
@@ -16,7 +16,10 @@ interface I18n {
   locale: string;
   setLocale: (l: string) => void;
   t: Translate;
-  money: (minor: number) => string;
+  /** Formats in the selected currency, or in `currency` when given (e.g. a past bet's). */
+  money: (minor: number, currency?: string) => string;
+  /** Like money, without a crypto amount's trailing zeros. For tight spots such as bet presets. */
+  moneyShort: (minor: number) => string;
   mult: (hundredths: number) => string;
   percent: (ratio: number, digits?: number) => string;
   number: (n: number) => string;
@@ -55,7 +58,8 @@ export function I18nProvider({ config, children }: { config: GameConfig; childre
       setLocale,
       t: (key, vars) =>
         (catalog[key] ?? en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(vars?.[name] ?? `{${name}}`)),
-      money: (minor) => formatMoney(minor, config, tag),
+      money: (minor, currency) => formatMoney(minor, currency ? withCurrency(config, currency) : config, tag),
+      moneyShort: (minor) => formatMoney(minor, config, tag, true),
       mult: (h) => `${multFmt.format(h / 100)}×`,
       percent: (ratio, digits = 1) =>
         new Intl.NumberFormat(tag, { style: "percent", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(ratio),

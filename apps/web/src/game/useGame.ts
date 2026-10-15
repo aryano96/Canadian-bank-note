@@ -105,12 +105,12 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
   }, [follow, refreshHistory, fail]);
 
   const placeBet = useCallback(
-    async (wager: number, autoCashOut: number | null) => {
+    async (wager: number, autoCashOut: number | null, currency: string) => {
       if (phase !== "idle" && phase !== "result") return;
       window.clearTimeout(resultTimer.current);
       setPhase("placing");
       try {
-        const { round: r, state } = await api.placeBet(wager, autoCashOut);
+        const { round: r, state } = await api.placeBet(wager, autoCashOut, currency);
         setPlayer(state);
         setRound(r);
         setPhase("running");
@@ -145,9 +145,9 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
     }
   }, [phase, round, settle, fail]);
 
-  const topUp = useCallback(async () => {
+  const topUp = useCallback(async (currency: string) => {
     try {
-      setPlayer(await api.topUp());
+      setPlayer(await api.topUp(currency));
     } catch (err) {
       fail(err);
     }

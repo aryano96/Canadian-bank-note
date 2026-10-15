@@ -73,9 +73,9 @@ async function handle(method: string, url: URL, headers: Headers, body: unknown,
   const roundMatch = /^\/api\/rounds\/([^/]+)(\/cashout|\/stream)?$/.exec(path);
   if (path === "/api/me") return game.state(id);
   if (path === "/api/bets" && method === "POST") {
-    const { wager, autoCashOut } = body as { wager: number; autoCashOut?: number | null };
+    const { wager, autoCashOut, currency } = body as { wager: number; autoCashOut?: number | null; currency?: string };
     return once(async () => {
-      const round = await game.placeBet(id, wager, autoCashOut ? toHundredths(autoCashOut) : null);
+      const round = await game.placeBet(id, wager, autoCashOut ? toHundredths(autoCashOut) : null, currency);
       return { round, state: game.state(id) };
     });
   }
@@ -88,13 +88,13 @@ async function handle(method: string, url: URL, headers: Headers, body: unknown,
     const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? config.ui.historySize) || 20));
     return game.history(id, limit);
   }
-  if (path === "/api/stats") return game.stats(id);
+  if (path === "/api/stats") return game.stats(id, url.searchParams.get("currency") ?? undefined);
   if (path === "/api/seed" && method === "PUT") {
     const seed = String((body as { clientSeed?: string }).clientSeed ?? "").trim();
     if (!seed || seed.length > 64) throw new GameError("VALIDATION_FAILED", "clientSeed: 1 to 64 characters");
     return game.setClientSeed(id, seed);
   }
-  if (path === "/api/topup" && method === "POST") return game.topUp(id);
+  if (path === "/api/topup" && method === "POST") return game.topUp(id, (body as { currency?: string } | undefined)?.currency);
   throw new GameError("ROUND_NOT_FOUND", "Not found");
 }
 

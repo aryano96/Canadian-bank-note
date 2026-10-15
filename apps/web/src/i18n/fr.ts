@@ -6,6 +6,10 @@ export const fr: Record<MessageKey, string> = {
   "app.demoNotice": "Crédits de démonstration seulement. Aucun argent réel.",
 
   "header.balance": "Solde",
+  "header.currency": "Choisir la devise",
+  "header.currencyLocked": "Terminez la manche pour changer de devise",
+  "header.fiat": "Monnaies",
+  "header.crypto": "Cryptomonnaies",
   "header.language": "English",
   "header.languageLabel": "Passer à l'anglais",
   "header.soundOn": "Son activé",

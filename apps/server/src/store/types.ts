@@ -9,7 +9,8 @@ import type { Hundredths } from "@mint-rush/engine";
 export interface Account {
   id: string;
   tokenHash: string;
-  balance: number;
+  /** One wallet per currency code, in that currency's minor units. */
+  balances: Record<string, number>;
   clientSeed: string;
   nonce: number;
   nextServerSeed: string;
@@ -23,6 +24,7 @@ export interface RoundRecord {
   id: string;
   accountId: string;
   nonce: number;
+  currency: string;
   wager: number;
   autoCashOut: Hundredths | null;
   golden: boolean;
@@ -44,6 +46,7 @@ export interface LedgerEntry {
   accountId: string;
   roundId: string | null;
   type: LedgerType;
+  currency: string;
   amount: number;
   balanceAfter: number;
   createdAt: number;
@@ -71,7 +74,7 @@ export interface Store {
   listRounds(accountId: string, limit: number): RoundRecord[];
 
   addLedgerEntry(entry: LedgerEntry): void;
-  listLedger(accountId: string, limit: number): LedgerEntry[];
+  listLedger(accountId: string, currency: string, limit: number): LedgerEntry[];
 
   getIdempotent(accountId: string, key: string): IdempotentResponse | undefined;
   putIdempotent(accountId: string, key: string, response: IdempotentResponse): void;

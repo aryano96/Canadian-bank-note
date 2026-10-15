@@ -1,5 +1,7 @@
 import type { Account, IdempotentResponse, LedgerEntry, RoundRecord, Store } from "./types.ts";
 
+const copyAccount = (a: Account): Account => ({ ...a, balances: { ...a.balances } });
+
 /** In-memory store for tests and zero-setup demos. */
 export class MemoryStore implements Store {
   private accounts = new Map<string, Account>();
@@ -10,7 +12,7 @@ export class MemoryStore implements Store {
   transaction<T>(fn: () => T): T {
     // Snapshot so a throw rolls back, matching the SQLite adapter.
     const snapshot = {
-      accounts: new Map([...this.accounts].map(([k, v]) => [k, { ...v }])),
+      accounts: new Map([...this.accounts].map(([k, v]) => [k, copyAccount(v)])),
       rounds: new Map([...this.rounds].map(([k, v]) => [k, { ...v }])),
       ledger: this.ledger.length,
       idempotency: new Map(this.idempotency),
@@ -27,18 +29,19 @@ export class MemoryStore implements Store {
   }
 
   createAccount(account: Account) {
-    this.accounts.set(account.id, { ...account });
+    this.accounts.set(account.id, copyAccount(account));
   }
   getAccount(id: string) {
     const a = this.accounts.get(id);
-    return a && { ...a };
+    return a && copyAccount(a);
   }
   getAccountByTokenHash(tokenHash: string) {
-    for (const a of this.accounts.values()) if (a.tokenHash === tokenHash) return { ...a };
+    for (const a of this.accounts.values()) if (a.tokenHash === tokenHash) return copyAccount(a);
     return undefined;
   }
   updateAccount(account: Account) {
-    this.accounts.set(account.id, { ...account });
+    if (Object.values(account.balances).some((b) => b < 0)) throw new Error("balance cannot go negative");
+    this.accounts.set(account.id, copyAccount(account));
   }
 
   insertRound(round: RoundRecord) {
@@ -71,8 +74,12 @@ export class MemoryStore implements Store {
   addLedgerEntry(entry: LedgerEntry) {
     this.ledger.push({ ...entry });
   }
-  listLedger(accountId: string, limit: number) {
-    return this.ledger.filter((e) => e.accountId === accountId).slice(-limit).reverse();
+  listLedger(accountId: string, currency: string, limit: number) {
+    return this.ledger
+      .filter((e) => e.accountId === accountId && e.currency === currency)
+      .slice(-limit)
+      .reverse()
+      .map((e) => ({ ...e }));
   }
 
   getIdempotent(accountId: string, key: string) {

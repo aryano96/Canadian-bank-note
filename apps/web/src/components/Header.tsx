@@ -1,7 +1,13 @@
+import type { Currency } from "@mint-rush/engine";
 import { useI18n } from "../i18n/index.tsx";
+import { CurrencyPicker } from "./CurrencyPicker.tsx";
 
 interface Props {
-  balance: number | null;
+  currencies: Currency[];
+  currency: string;
+  balances: Record<string, number> | null;
+  onCurrency: (code: string) => void;
+  currencyLocked: boolean;
   sound: boolean;
   onSound: (v: boolean) => void;
   theme: string;
@@ -10,8 +16,8 @@ interface Props {
   balanceFlash: "up" | "down" | null;
 }
 
-export function Header({ balance, sound, onSound, theme, onTheme, onHelp, balanceFlash }: Props) {
-  const { t, money, locale, setLocale } = useI18n();
+export function Header({ currencies, currency, balances, onCurrency, currencyLocked, sound, onSound, theme, onTheme, onHelp, balanceFlash }: Props) {
+  const { t, locale, setLocale } = useI18n();
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -25,15 +31,14 @@ export function Header({ balance, sound, onSound, theme, onTheme, onHelp, balanc
           </div>
         </div>
 
-        <div className="wallet" aria-live="polite">
-          <span className="sr-only">{t("header.balance")}</span>
-          <span className={`wallet-amount num ${balanceFlash ? `flash-${balanceFlash}` : ""}`} data-testid="balance">
-            {balance === null ? "…" : money(balance)}
-          </span>
-          <span className="wallet-coin" aria-hidden="true">
-            CAD
-          </span>
-        </div>
+        <CurrencyPicker
+          currencies={currencies}
+          currency={currency}
+          balances={balances}
+          onChange={onCurrency}
+          locked={currencyLocked}
+          flash={balanceFlash}
+        />
 
         <nav className="header-actions" aria-label="Settings">
           <button className="ghost-btn" onClick={onHelp}>

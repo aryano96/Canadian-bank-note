@@ -1,4 +1,7 @@
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { elapsedFor, parseConfig, sha256Hex, verifyRound } from "@mint-rush/engine";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -43,7 +46,7 @@ describe.each(stores)("API with %s store", (_, makeStore) => {
 
   it("creates a guest with the starting balance and a seed commitment", async () => {
     const me = await call("GET", "/api/me");
-    expect(me.body.balance).toBe(config.account.startingBalance);
+    expect(me.body.balances).toEqual(Object.fromEntries(config.currencies.map((c) => [c.code, c.startingBalance])));
     expect(me.body.nextServerSeedHash).toMatch(/^[0-9a-f]{64}$/);
   });
 
@@ -56,7 +59,7 @@ describe.each(stores)("API with %s store", (_, makeStore) => {
   it("deducts the wager, pays wager x multiplier on cash-out", async () => {
     const bet = await call("POST", "/api/bets", { wager: 1000 }, idem());
     expect(bet.status).toBe(200);
-    expect(bet.body.state.balance).toBe(config.account.startingBalance - 1000);
+    expect(bet.body.state.balances.CAD).toBe(config.account.startingBalance - 1000);
     expect(bet.body.round.crashPoint).toBeUndefined(); // secret while running
 
     const round = bet.body.round;
@@ -68,7 +71,7 @@ describe.each(stores)("API with %s store", (_, makeStore) => {
     const out = await call("POST", `/api/rounds/${round.id}/cashout`, undefined, idem());
     if (out.status === 200) {
       expect(out.body.round.status).toBe("won");
-      expect(out.body.state.balance).toBe(config.account.startingBalance - 1000 + out.body.round.payout);
+      expect(out.body.state.balances.CAD).toBe(config.account.startingBalance - 1000 + out.body.round.payout);
     } else {
       expect(out.body.error.code).toBe("ROUND_OVER");
     }
@@ -172,6 +175,54 @@ describe.each(stores)("API with %s store", (_, makeStore) => {
     expect(stats.rounds).toBe(5);
     expect(stats.wagered).toBe(500);
     const me = (await call("GET", "/api/me")).body;
-    expect(me.balance).toBe(config.account.startingBalance - 500 + stats.returned);
+    expect(me.balances.CAD).toBe(config.account.startingBalance - 500 + stats.returned);
+  });
+
+  it("keeps a separate wallet per currency", async () => {
+    const btc = config.currencies.find((c) => c.code === "BTC")!;
+    const bet = await call("POST", "/api/bets", { wager: btc.minBet, currency: "BTC" }, idem());
+    expect(bet.status).toBe(200);
+    expect(bet.body.round.currency).toBe("BTC");
+    expect(bet.body.state.balances.BTC).toBe(btc.startingBalance - btc.minBet);
+    expect(bet.body.state.balances.CAD).toBe(config.account.startingBalance);
+
+    now += 10 * 60_000;
+    const btcStats = (await call("GET", "/api/stats?currency=BTC")).body;
+    expect(btcStats).toMatchObject({ currency: "BTC", rounds: 1, wagered: btc.minBet });
+    expect((await call("GET", "/api/stats")).body).toMatchObject({ currency: "CAD", rounds: 0 });
+  });
+
+  it("applies each currency's own limits and rejects unknown ones", async () => {
+    const eth = config.currencies.find((c) => c.code === "ETH")!;
+    expect((await call("POST", "/api/bets", { wager: eth.minBet - 1, currency: "ETH" }, idem())).body.error.code).toBe("BET_TOO_SMALL");
+    expect((await call("POST", "/api/bets", { wager: 100, currency: "DOGE" }, idem())).body.error.code).toBe("VALIDATION_FAILED");
+    expect((await call("POST", "/api/topup", { currency: "ETH" })).body.error.code).toBe("TOP_UP_NOT_NEEDED");
+  });
+});
+
+describe("SQLite migration", () => {
+  it("moves a single-balance database into CAD wallets", async () => {
+    const { DatabaseSync } = createRequire(import.meta.url)("node:sqlite") as typeof import("node:sqlite");
+    const dir = mkdtempSync(join(tmpdir(), "mint-rush-"));
+    const path = join(dir, "old.db");
+    const old = new DatabaseSync(path);
+    old.exec(`
+      CREATE TABLE accounts (id TEXT PRIMARY KEY, token_hash TEXT NOT NULL UNIQUE, balance INTEGER NOT NULL CHECK (balance >= 0),
+        client_seed TEXT NOT NULL, nonce INTEGER NOT NULL, next_server_seed TEXT NOT NULL, next_server_seed_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
+      CREATE TABLE rounds (id TEXT PRIMARY KEY, account_id TEXT NOT NULL, nonce INTEGER NOT NULL, wager INTEGER NOT NULL, auto_cash_out INTEGER,
+        golden INTEGER NOT NULL, crash_point INTEGER NOT NULL, server_seed TEXT NOT NULL, server_seed_hash TEXT NOT NULL, client_seed TEXT NOT NULL,
+        started_at INTEGER NOT NULL, status TEXT NOT NULL, cash_out_at INTEGER, payout INTEGER NOT NULL, bonus INTEGER NOT NULL, settled_at INTEGER);
+      CREATE TABLE ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, account_id TEXT NOT NULL, round_id TEXT, type TEXT NOT NULL,
+        amount INTEGER NOT NULL, balance_after INTEGER NOT NULL, created_at INTEGER NOT NULL);
+      INSERT INTO accounts VALUES ('a1', 'hash', 4321, 'seed', 3, 'next', 'nexthash', 1);
+      INSERT INTO ledger (account_id, round_id, type, amount, balance_after, created_at) VALUES ('a1', NULL, 'topup', 4321, 4321, 1);
+    `);
+    old.close();
+
+    const store = new SqliteStore(path);
+    expect(store.getAccount("a1")?.balances).toEqual({ CAD: 4321 });
+    expect(store.listLedger("a1", "CAD", 10)).toHaveLength(1);
+    store.close();
+    rmSync(dir, { recursive: true, force: true });
   });
 });

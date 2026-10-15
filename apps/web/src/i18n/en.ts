@@ -4,6 +4,10 @@ export const en = {
   "app.demoNotice": "Demo credits only. No real money.",
 
   "header.balance": "Balance",
+  "header.currency": "Choose currency",
+  "header.currencyLocked": "Finish the round to switch currency",
+  "header.fiat": "Fiat",
+  "header.crypto": "Crypto",
   "header.language": "Français",
   "header.languageLabel": "Switch language to French",
   "header.soundOn": "Sound on",

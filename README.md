@@ -11,9 +11,13 @@ Place a wager and the press starts printing. The multiplier climbs along an engr
 |---|---|---|
 | ![Cashed out](docs/screenshots/cashed-out.png) | ![Crashed](docs/screenshots/crashed.png) | ![Autobet](docs/screenshots/autobet.png) |
 
-| Verified in the browser | Stats and house check | Français | Mobile |
-|---|---|---|---|
-| ![Verify](docs/screenshots/verify.png) | ![Stats](docs/screenshots/stats.png) | ![French](docs/screenshots/french.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Currencies | Verified in the browser | Stats and house check |
+|---|---|---|
+| ![Currencies](docs/screenshots/currencies.png) | ![Verify](docs/screenshots/verify.png) | ![Stats](docs/screenshots/stats.png) |
+
+| Français | Mobile |
+|---|---|
+| ![French](docs/screenshots/french.png) | ![Mobile](docs/screenshots/mobile.png) |
 
 ## Quick start
 
@@ -41,7 +45,7 @@ npm run build:demo               # apps/web/dist-demo
 Other commands:
 
 ```bash
-npm test                         # 49 tests: engine, economy, API on both stores
+npm test                         # 54 tests: engine, economy, API on both stores
 npm run typecheck
 npm run simulate -- 1000000 2    # long-run economics of the current config
 ```
@@ -57,6 +61,7 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 **Optional enhancements built**
 - Auto cash-out ("Cashout At") with a live "Profit on Win" preview.
 - Autobet mode: number of bets, increase or reset the wager on a win or loss, and stop on a profit or loss limit.
+- Five wallets: Canadian dollar, US dollar, British pound, Bitcoin and Ethereum. Each has its own balance, bet limits, presets and stats, and crypto amounts show all 8 decimals. Pick one from the wallet menu in the top bar.
 - Configurable bets: presets, ½ / 2× / Max, min/max limits.
 - Session history and a "My bets" table.
 - Golden Loonie bonus rounds: every 10th round boosts profit by 10%.
@@ -126,10 +131,9 @@ Everything is in [`config/game.config.json`](config/game.config.json). It is val
 | `rng.maxMultiplier` | `1000` | Highest possible crash point |
 | `timing.growthRatePerSecond` | `0.08` | Starting speed of the curve |
 | `timing.accelerationPerSecond2` | `0.003` | How fast the climb speeds up (2x at ≈6.9 s, 10x at ≈17 s) |
-| `betting.minBet` / `maxBet` / `presets` | cents | Bet limits and quick picks |
+| `currencies[]` | CAD, USD, GBP, BTC, ETH | One wallet each, with `symbol`, `kind` (fiat or crypto), `minorUnits`, `startingBalance`, `topUpAmount`, `minBet`, `maxBet` and `presets`. Amounts are in the smallest unit (cents, pence, satoshis). The first entry is the default. |
 | `betting.minAutoCashOut` | `1.01` | Lowest auto target |
 | `bonus.goldenRoundEvery` / `goldenMultiplierBoost` | `10` / `0.1` | Golden Loonie rounds |
-| `account.startingBalance` / `topUpAmount` | cents | Demo credits |
 | `ui.locales` / `defaultLocale` / `theme` | `en, fr` / `en` / `night` | Presentation |
 
 Environment variables: `PORT`, `STORE=memory|sqlite`, `DB_PATH`, `CONFIG_PATH`, `STATIC_DIR`.
@@ -142,12 +146,13 @@ Environment variables: `PORT`, `STORE=memory|sqlite`, `DB_PATH`, `CONFIG_PATH`, 
 |---|---|---|
 | `POST` | `/api/session` | Creates a guest account and returns a bearer token |
 | `GET` | `/api/me` | Balance, seeds, active round, server time |
-| `POST` | `/api/bets` | `{ wager, autoCashOut? }`, requires `Idempotency-Key` |
+| `POST` | `/api/bets` | `{ wager, autoCashOut?, currency? }`, requires `Idempotency-Key` |
 | `POST` | `/api/rounds/:id/cashout` | Requires `Idempotency-Key` |
 | `GET` | `/api/rounds/:id/stream` | SSE: `round`, then `settled` |
-| `GET` | `/api/rounds/:id`, `/api/history`, `/api/stats` | Seeds are revealed only after settlement |
+| `GET` | `/api/rounds/:id`, `/api/history` | Seeds are revealed only after settlement |
+| `GET` | `/api/stats?currency=BTC` | Lifetime numbers for one wallet |
 | `PUT` | `/api/seed` | `{ clientSeed }`, between rounds only |
-| `POST` | `/api/topup` | Only when the balance is below the minimum bet |
+| `POST` | `/api/topup` | `{ currency? }`, only when that wallet is below its minimum bet |
 | `GET` | `/api/simulate?target=2&rounds=200000` | Monte Carlo house check |
 | `GET` | `/api/config`, `/api/health` | |
 

@@ -21,7 +21,10 @@ export interface AppOptions {
 const betBody = z.object({
   wager: z.number().int().positive(),
   autoCashOut: z.number().min(1).nullable().optional(),
+  currency: z.string().optional(),
 });
+const currencyBody = z.object({ currency: z.string().optional() }).default({});
+const currencyQuery = z.object({ currency: z.string().optional() });
 const seedBody = z.object({ clientSeed: z.string().trim().min(1).max(64) });
 const simulateQuery = z.object({
   target: z.coerce.number().min(1.01).max(1000).default(2),
@@ -82,7 +85,7 @@ export async function buildApp(opts: AppOptions) {
     return idempotency.run(account.id, req, reply, async () => {
       const body = betBody.parse(req.body);
       const auto = body.autoCashOut ? toHundredths(body.autoCashOut) : null;
-      const round = await game.placeBet(account.id, body.wager, auto);
+      const round = await game.placeBet(account.id, body.wager, auto, body.currency);
       return { round, state: game.state(account.id) };
     });
   });
@@ -139,14 +142,14 @@ export async function buildApp(opts: AppOptions) {
     return game.history(account.id, limit);
   });
 
-  app.get("/api/stats", async (req) => game.stats((await auth(req)).id));
+  app.get("/api/stats", async (req) => game.stats((await auth(req)).id, currencyQuery.parse(req.query).currency));
 
   app.put("/api/seed", async (req) => {
     const account = await auth(req);
     return game.setClientSeed(account.id, seedBody.parse(req.body).clientSeed);
   });
 
-  app.post("/api/topup", async (req) => game.topUp((await auth(req)).id));
+  app.post("/api/topup", async (req) => game.topUp((await auth(req)).id, currencyBody.parse(req.body ?? {}).currency));
 
   app.get("/api/simulate", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req) => {
     const q = simulateQuery.parse(req.query);

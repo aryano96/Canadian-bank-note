@@ -1,19 +1,68 @@
 {
-  "$comment": "Every gameplay rule lives here. Change a value, restart the server, and the whole game (server, UI, simulator) follows.",
-  "currency": {
-    "code": "CAD",
-    "symbol": "$",
-    "label": "Mint Credits",
-    "minorUnits": 2
-  },
-  "account": {
-    "startingBalance": 100000,
-    "topUpAmount": 100000
-  },
+  "$comment": "Every gameplay rule lives here. Change a value, restart the server, and the whole game (server, UI, simulator) follows. Currency amounts are integers in each currency's smallest unit.",
+  "currencies": [
+    {
+      "code": "CAD",
+      "symbol": "$",
+      "name": "Canadian dollar",
+      "kind": "fiat",
+      "minorUnits": 2,
+      "startingBalance": 100000,
+      "topUpAmount": 100000,
+      "minBet": 10,
+      "maxBet": 100000,
+      "presets": [100, 500, 1000, 5000]
+    },
+    {
+      "code": "USD",
+      "symbol": "US$",
+      "name": "US dollar",
+      "kind": "fiat",
+      "minorUnits": 2,
+      "startingBalance": 100000,
+      "topUpAmount": 100000,
+      "minBet": 10,
+      "maxBet": 100000,
+      "presets": [100, 500, 1000, 5000]
+    },
+    {
+      "code": "GBP",
+      "symbol": "£",
+      "name": "British pound",
+      "kind": "fiat",
+      "minorUnits": 2,
+      "startingBalance": 80000,
+      "topUpAmount": 80000,
+      "minBet": 10,
+      "maxBet": 80000,
+      "presets": [100, 500, 1000, 5000]
+    },
+    {
+      "code": "BTC",
+      "symbol": "₿",
+      "name": "Bitcoin",
+      "kind": "crypto",
+      "minorUnits": 8,
+      "startingBalance": 1000000,
+      "topUpAmount": 1000000,
+      "minBet": 100,
+      "maxBet": 1000000,
+      "presets": [1000, 5000, 10000, 50000]
+    },
+    {
+      "code": "ETH",
+      "symbol": "Ξ",
+      "name": "Ethereum",
+      "kind": "crypto",
+      "minorUnits": 8,
+      "startingBalance": 30000000,
+      "topUpAmount": 30000000,
+      "minBet": 1000,
+      "maxBet": 30000000,
+      "presets": [10000, 50000, 100000, 500000]
+    }
+  ],
   "betting": {
-    "minBet": 10,
-    "maxBet": 100000,
-    "presets": [100, 500, 1000, 5000],
     "minAutoCashOut": 1.01
   },
   "rng": {

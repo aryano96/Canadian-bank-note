@@ -1,13 +1,13 @@
 import { computePayout, toMajor, toMinor, type GameConfig } from "@mint-rush/engine";
 import { useEffect, useRef, useState } from "react";
-import type { PlayerState, PublicRound } from "../api/types.ts";
+import type { PlayerView, PublicRound } from "../api/types.ts";
 import type { Phase } from "../game/useGame.ts";
 import { useI18n } from "../i18n/index.tsx";
 import { usePref } from "../lib/prefs.ts";
 
 interface Props {
   config: GameConfig;
-  player: PlayerState | null;
+  player: PlayerView | null;
   phase: Phase;
   round: PublicRound | null;
   live: number;
@@ -26,11 +26,12 @@ const AUTOBET_GAP_MS = 900;
 const parse = (text: string) => Number(text.replace(",", ".")) || 0;
 
 export function BetPanel({ config, player, phase, round, live, onBet, onCashOut, onTopUp, registerPrimary }: Props) {
-  const { t, money, mult } = useI18n();
+  const { t, money, moneyShort, mult } = useI18n();
   const { betting, currency } = config;
   const [mode, setMode] = usePref("betMode", "manual") as unknown as [Mode, (m: Mode) => void];
+  // Amounts are remembered per currency; the panel remounts when the currency changes.
   const [wagerText, setWagerText] = usePref(
-    "wager",
+    `wager.${currency.code}`,
     toMajor(betting.presets[1] ?? betting.minBet, config).toFixed(currency.minorUnits),
   );
   const [targetOn, setTargetOn] = usePref("autoOn", false);
@@ -43,8 +44,8 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
   const [onWinPct, setOnWinPct] = usePref("autoOnWinPct", "0");
   const [onLoss, setOnLoss] = usePref("autoOnLoss", "reset") as unknown as [Adjust, (a: Adjust) => void];
   const [onLossPct, setOnLossPct] = usePref("autoOnLossPct", "0");
-  const [stopProfitText, setStopProfitText] = usePref("autoStopProfit", "0");
-  const [stopLossText, setStopLossText] = usePref("autoStopLoss", "0");
+  const [stopProfitText, setStopProfitText] = usePref(`autoStopProfit.${currency.code}`, "0");
+  const [stopLossText, setStopLossText] = usePref(`autoStopLoss.${currency.code}`, "0");
   const [autobet, setAutobet] = useState<{ remaining: number | null; startBalance: number; baseWager: number } | null>(null);
 
   const wager = toMinor(parse(wagerText), config);
@@ -205,7 +206,7 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
         <div className="presets">
           {betting.presets.map((p) => (
             <button key={p} className={`preset ${p === wager ? "active" : ""}`} disabled={locked} onClick={() => setWager(p)}>
-              {money(p)}
+              {moneyShort(p)}
             </button>
           ))}
         </div>
