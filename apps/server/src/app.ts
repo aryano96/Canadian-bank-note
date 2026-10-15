@@ -154,7 +154,7 @@ export async function buildApp(opts: AppOptions) {
   });
 
   if (opts.staticDir && existsSync(opts.staticDir)) {
-    await app.register(fastifyStatic, { root: opts.staticDir, wildcard: false });
+    await app.register(fastifyStatic, { root: opts.staticDir });
     app.setNotFoundHandler((req, reply) => {
       if (req.url.startsWith("/api/")) {
         return reply.code(404).send({ error: { code: "ROUND_NOT_FOUND", message: "Not found" } });

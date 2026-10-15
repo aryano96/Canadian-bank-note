@@ -29,6 +29,15 @@ describe("economy", () => {
   });
 });
 
+describe("golden rounds", () => {
+  it("simulation matches the exact RTP including the bonus", () => {
+    const config = loadConfig();
+    const result = simulate(400_000, 200, config, seededRandom(42));
+    expect(result.theoreticalRtp).toBeCloseTo(0.99 * (1 + 0.1 * 0.1 * 0.5), 6);
+    expect(Math.abs(result.rtp - result.theoreticalRtp)).toBeLessThan(0.01);
+  });
+});
+
 describe("config validation", () => {
   it("rejects nonsense with a readable message", () => {
     const bad = loadConfig((c) => {

@@ -16,7 +16,7 @@ const r = simulate(rounds, target, config);
 const pct = (n: number) => `${(n * 100).toFixed(3)}%`;
 console.log(`Mint Rush economy check: ${rounds.toLocaleString()} rounds, cash out at ${(target / 100).toFixed(2)}x`);
 console.log(`  house edge          ${pct(config.rng.houseEdge)}`);
-console.log(`  theoretical RTP     ${pct(r.theoreticalRtp)} (before golden-round bonus)`);
+console.log(`  theoretical RTP     ${pct(r.theoreticalRtp)} (including Golden Loonie bonus)`);
 console.log(`  simulated RTP       ${pct(r.rtp)}`);
 console.log(`  win rate            ${pct(r.winRate)}`);
 console.log(`  instant crashes     ${pct(r.instantCrashRate)}`);
