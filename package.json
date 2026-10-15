@@ -1,0 +1,28 @@
+{
+  "name": "mint-rush",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mint Rush: a provably fair, banknote-themed crash game for ThunderHacks 2026 (Canadian Bank Note challenge).",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,web -c yellow,cyan \"npm run dev -w @mint-rush/server\" \"npm run dev -w @mint-rush/web\"",
+    "build": "npm run build -w @mint-rush/web",
+    "start": "npm run start -w @mint-rush/server",
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/engine && tsc -p apps/server && tsc -p apps/web",
+    "simulate": "tsx packages/engine/scripts/simulate.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

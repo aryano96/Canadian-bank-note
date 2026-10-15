@@ -1,0 +1,38 @@
+{
+  "$comment": "Every gameplay rule lives here. Change a value, restart the server, and the whole game (server, UI, simulator) follows.",
+  "currency": {
+    "code": "CAD",
+    "symbol": "$",
+    "label": "Mint Credits",
+    "minorUnits": 2
+  },
+  "account": {
+    "startingBalance": 100000,
+    "topUpAmount": 100000
+  },
+  "betting": {
+    "minBet": 10,
+    "maxBet": 100000,
+    "presets": [100, 500, 1000, 5000],
+    "minAutoCashOut": 1.01
+  },
+  "rng": {
+    "houseEdge": 0.01,
+    "maxMultiplier": 1000
+  },
+  "timing": {
+    "growthRatePerSecond": 0.06,
+    "resultHoldMs": 2500
+  },
+  "bonus": {
+    "enabled": true,
+    "goldenRoundEvery": 10,
+    "goldenMultiplierBoost": 0.1
+  },
+  "ui": {
+    "defaultLocale": "en",
+    "locales": ["en", "fr"],
+    "theme": "polymer",
+    "historySize": 20
+  }
+}
