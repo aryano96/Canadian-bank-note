@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import type { GameConfig } from "@mint-rush/engine";
 import { computePayout } from "@mint-rush/engine";
 import type { PublicRound } from "../api/types.ts";
@@ -5,6 +6,25 @@ import type { Phase } from "../game/useGame.ts";
 import { useI18n } from "../i18n/index.tsx";
 import { Stage } from "../stage/Stage.tsx";
 import { Lanterns, type LanternTone } from "./Lanterns.tsx";
+
+/** How far the lanterns can float up: the free space above them in the stage. */
+function useLiftRoom(shown: boolean) {
+  const overlay = useRef<HTMLDivElement>(null);
+  const lift = useRef<HTMLDivElement>(null);
+  const [room, setRoom] = useState(0);
+  useEffect(() => {
+    const o = overlay.current;
+    const l = lift.current;
+    if (!o || !l) return;
+    const measure = () => setRoom(Math.max(0, l.offsetTop - 8));
+    const ro = new ResizeObserver(measure);
+    ro.observe(o);
+    ro.observe(l);
+    measure();
+    return () => ro.disconnect();
+  }, [shown]);
+  return { overlay, lift, room };
+}
 
 interface Props {
   config: GameConfig;
@@ -30,8 +50,11 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
   // Lanterns glow gold while the multiplier climbs, then turn green on a cash-out and red on a crash.
   const tone: LanternTone = running || phase === "placing" || !lastSettled ? "gold" : lastSettled.status === "won" ? "win" : "loss";
   const dim = !running && phase !== "placing" && !!lastSettled && !settled;
-  // Rises fast at first so the light visibly grows even in short rounds: about half at 2x, nearly full by 10x.
-  const glow = running ? Math.sqrt(Math.min(1, Math.log(live / 100) / Math.log(20))) : 0;
+  // Rises fast at first so the change shows even in short rounds: about half at 2x, nearly full by 10x.
+  const climb = (m: number) => Math.sqrt(Math.min(1, Math.max(0, Math.log(m / 100) / Math.log(20))));
+  const glow = running ? climb(live) : 0;
+  // The lanterns float up with the multiplier, stay where the round ended, and sink back for the next one.
+  const rise = phase === "placing" || (!running && !lastSettled) ? 0 : climb(shown);
   const sparkle = (running && (round!.golden || live >= 500)) || settled?.status === "won";
 
   let status = "";
@@ -46,6 +69,7 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
   // The stage edges warm up over the last few rounds before a Golden round.
   const warmth = !running && roundsUntilGolden !== null && roundsUntilGolden <= 3 ? (4 - roundsUntilGolden) / 4 : 0;
   const goldenNext = roundsUntilGolden === 0 && phase === "idle";
+  const liftRoom = useLiftRoom(!goldenNext);
 
   return (
     <section
@@ -69,20 +93,29 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
           <div className="stage-status">{t("stage.goldenNextBody", { boost })}</div>
         </div>
       ) : (
-        <div className="stage-overlay lantern-overlay">
-          <Lanterns text={mult(shown)} tone={tone} glow={glow} dim={dim} sparkle={sparkle} resultKey={settled?.id} />
-          {status && <div className="stage-status">{status}</div>}
-          {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
-          {settled?.status === "won" && (
-            <div className="stage-potential mono win">
-              {t("stage.profit", {
-                amount: money(settled.payout - settled.wager),
-              })}
-            </div>
-          )}
-          {settled?.status === "won" && settled.bonus > 0 && (
-            <div className="bonus-chip mono">{t("stage.bonusChip", { boost, amount: money(settled.bonus) })}</div>
-          )}
+        <div className="stage-overlay lantern-overlay" ref={liftRoom.overlay}>
+          <div
+            className={`lantern-lift ${running ? "is-climbing" : ""}`}
+            ref={liftRoom.lift}
+            // Smaller as it rises, as if drifting away.
+            style={{ transform: `translateY(${-rise * liftRoom.room}px) scale(${1 - rise * 0.15})` }}
+          >
+            <Lanterns text={mult(shown)} tone={tone} glow={glow} dim={dim} sparkle={sparkle} resultKey={settled?.id} />
+          </div>
+          <div className="stage-readout">
+            {status && <div className="stage-status">{status}</div>}
+            {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
+            {settled?.status === "won" && (
+              <div className="stage-potential mono win">
+                {t("stage.profit", {
+                  amount: money(settled.payout - settled.wager),
+                })}
+              </div>
+            )}
+            {settled?.status === "won" && settled.bonus > 0 && (
+              <div className="bonus-chip mono">{t("stage.bonusChip", { boost, amount: money(settled.bonus) })}</div>
+            )}
+          </div>
         </div>
       )}
 

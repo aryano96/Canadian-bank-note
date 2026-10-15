@@ -33,6 +33,8 @@ interface Shape {
 
 const W = 400;
 const H = 268;
+/** Sky lanterns have no strings, so the view starts just above the caps. */
+const TOP = 20;
 const MAIN: Shape = { cx: 200, cy: 120, rx: 84, ry: 80 };
 const LEFT: Shape = { cx: 56, cy: 94, rx: 40, ry: 38 };
 const RIGHT: Shape = { cx: 344, cy: 94, rx: 40, ry: 38 };
@@ -105,12 +107,11 @@ function Lantern({ shape, ids, kind }: { shape: Shape; ids: { paper: string; cor
       className={`lan lan-${kind}`}
       style={
         {
-          transformOrigin: `${cx}px 0px`,
+          transformOrigin: `${cx}px ${cy}px`,
           "--lan-delay": kind === "main" ? "-2.2s" : cx < W / 2 ? "0s" : "-1.6s",
         } as React.CSSProperties
       }
     >
-      <line className="lan-string" x1={cx} y1={0} x2={cx} y2={cy - ry - cap + 2} />
       <rect className="lan-cap" x={cx - rx * 0.32} y={cy - ry - cap + 2} width={rx * 0.64} height={cap} rx={cap * 0.3} />
       <ellipse cx={cx} cy={cy} rx={rx} ry={ry} fill={`url(#${ids.paper})`} />
       <g clipPath={`url(#${ids.clip})`}>
@@ -177,7 +178,7 @@ export function Lanterns({ text, tone, dim, resultKey, sparkle, glow = 0 }: Prop
       style={{ "--lan-glow": SETTLED_GLOW[tone] ?? glow } as React.CSSProperties}
       data-testid="multiplier"
     >
-      <svg key={resultKey} viewBox={`0 0 ${W} ${H}`} aria-hidden="true" overflow="visible">
+      <svg key={resultKey} viewBox={`0 ${TOP} ${W} ${H - TOP}`} aria-hidden="true" overflow="visible">
         <defs>
           {[
             [mainIds.paper, "main"],

@@ -3,7 +3,7 @@
 **A provably fair crash game themed on Canadian banknote security printing.**
 Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
-Place a wager and the press starts printing. The multiplier is painted on a trio of paper lanterns hanging over an engraved guilloché backdrop. They glow brighter gold as it climbs, flash green when you cash out and burn red when it crashes. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
+Place a wager and the press starts printing. The multiplier is painted on a trio of paper sky lanterns over an engraved guilloché backdrop. They float up and glow brighter gold as it climbs, flash green when you cash out and burn red when it crashes. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
 
 ![Round in progress](docs/screenshots/running.png)
 
