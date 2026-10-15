@@ -377,6 +377,8 @@ button:disabled {
   margin: 0 auto;
   padding: 20px clamp(12px, 3vw, 24px) 32px;
   display: grid;
+  /* minmax(0, 1fr) keeps a wide table from stretching the page past the phone screen. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -1024,24 +1026,253 @@ button:disabled {
   padding: 0 16px;
 }
 
-.multiplier {
-  font-size: clamp(56px, 9vw, 104px);
-  font-weight: 800;
-  line-height: 1;
-  letter-spacing: -0.02em;
-  transition: color 0.2s;
+/* ---------- paper lanterns (the multiplier) ---------- */
+
+.stage-overlay.lantern-overlay {
+  top: 0;
+  gap: 4px;
 }
-.multiplier.win {
-  color: var(--win);
+.lanterns {
+  width: min(440px, 52%);
+  /* Rising: amber gold that the light inside (--lan-glow, set inline) brightens to white-gold. */
+  --lan-main-light: #ffdc78;
+  --lan-main-paper: #e9ae2a;
+  --lan-main-edge: #8a5d06;
+  --lan-side-light: #ffe27a;
+  --lan-side-paper: #e8b10e;
+  --lan-side-edge: #8a6400;
+  --lan-core: #fffdf2;
+  --lan-halo: #ffc400;
+  --lan-flower-main: #d52b1e;
+  --lan-num: #5a2a00;
+  --lan-num-halo: #fff7da;
+  transition:
+    opacity 0.4s,
+    filter 0.4s;
 }
-.multiplier.loss {
-  color: var(--loss);
+.lanterns svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
 }
-.multiplier.gold {
-  color: var(--gold);
+.lanterns.tone-win {
+  --lan-main-light: #f2fff2;
+  --lan-main-paper: #c9f7c4;
+  --lan-main-edge: #3fb44a;
+  --lan-side-light: #9cff9c;
+  --lan-side-paper: #22b34a;
+  --lan-side-edge: #0f6a2a;
+  --lan-core: #f4fff4;
+  --lan-halo: #00e701;
+  --lan-num: #0b4a1a;
+  --lan-num-halo: #effff0;
 }
-.multiplier.dim {
-  opacity: 0.6;
+.lanterns.tone-loss {
+  --lan-main-light: #ff9a9a;
+  --lan-main-paper: #e3303d;
+  --lan-main-edge: #6e0b15;
+  --lan-side-light: #ff7a7a;
+  --lan-side-paper: #c51f2c;
+  --lan-side-edge: #520910;
+  --lan-core: #ffb3b3;
+  --lan-halo: #ff2d43;
+  --lan-flower-main: #fff1ec;
+  --lan-num: #fff6f4;
+  --lan-num-halo: #6e0b15;
+}
+.lanterns.dim {
+  opacity: 0.7;
+  filter: saturate(0.75);
+}
+
+.lan-halo {
+  opacity: calc(0.18 + var(--lan-glow) * 0.82);
+  transform-box: fill-box;
+  transform-origin: center;
+  scale: calc(0.75 + var(--lan-glow) * 0.45);
+  transition:
+    opacity 0.3s,
+    scale 0.3s;
+}
+.lan-halo.side {
+  opacity: calc(0.1 + var(--lan-glow) * 0.6);
+}
+.lan-core {
+  opacity: calc(0.05 + var(--lan-glow) * 0.95);
+  transition: opacity 0.3s;
+}
+.lan-rays {
+  stroke: var(--lan-halo);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: calc((var(--lan-glow) - 0.25) * 0.6);
+  transform-origin: 200px 120px;
+  animation: lan-rays 18s linear infinite;
+}
+@keyframes lan-rays {
+  to {
+    rotate: 360deg;
+  }
+}
+.lan-string {
+  stroke: #c9b18a;
+  stroke-width: 1.6;
+}
+.lan-cap {
+  fill: #20262c;
+}
+.lan-tassel-cord {
+  stroke: #d52b1e;
+  stroke-width: 2.5;
+}
+.lan-tassel {
+  fill: #d52b1e;
+}
+.lan-ribs path {
+  fill: none;
+  stroke: var(--lan-side-edge);
+  stroke-opacity: 0.3;
+  stroke-width: 1.2;
+}
+.lan-main .lan-ribs path {
+  stroke: var(--lan-main-edge);
+}
+.lan-ink {
+  fill: none;
+  stroke: #2a1a14;
+  stroke-linecap: round;
+}
+.lan-flower {
+  fill: #fff4ee;
+}
+.lan-main .lan-flower {
+  fill: var(--lan-flower-main);
+}
+.lan-flower-center {
+  fill: #ffd84d;
+}
+.lan-num {
+  fill: var(--lan-num);
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--lan-num-halo);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.lan {
+  filter: brightness(calc(0.82 + var(--lan-glow) * 0.3)) saturate(calc(1.15 - var(--lan-glow) * 0.35));
+  animation: lan-sway 4.5s ease-in-out infinite;
+  animation-delay: var(--lan-delay, 0s);
+}
+.lan-main {
+  animation-duration: 5.5s;
+}
+@keyframes lan-sway {
+  0%,
+  100% {
+    rotate: -1.2deg;
+  }
+  50% {
+    rotate: 1.2deg;
+  }
+}
+.lan-crack,
+.lan-smoke {
+  fill: none;
+  stroke-linecap: round;
+  opacity: 0;
+}
+.lan-sparks path {
+  fill: var(--lan-halo);
+  opacity: 0;
+}
+.lanterns.sparkle .lan-sparks path {
+  animation: lan-twinkle 1.6s ease-in-out infinite;
+}
+@keyframes lan-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    scale: 0.6;
+  }
+  50% {
+    opacity: 1;
+    scale: 1;
+  }
+}
+.lan-sparks path {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Cash out: a quick green pop. */
+.lanterns.tone-win:not(.dim) .lan-main-wrap {
+  transform-origin: 200px 120px;
+  animation: lan-pop 0.5s cubic-bezier(0.3, 1.6, 0.6, 1);
+}
+@keyframes lan-pop {
+  from {
+    scale: 0.86;
+  }
+}
+/* Crash: red, a tear in the paper, a wisp of smoke and a hard swing. */
+.lanterns.tone-loss .lan-crack {
+  stroke: #ffd6da;
+  stroke-width: 2;
+  opacity: 0.75;
+}
+.lanterns.tone-loss .lan {
+  animation: lan-swing 1.6s ease-out;
+}
+.lanterns.tone-loss .lan {
+  animation-delay: 0s;
+}
+.lanterns.tone-loss .lan-side {
+  animation-duration: 1.3s;
+}
+@keyframes lan-swing {
+  0% {
+    rotate: 0deg;
+  }
+  15% {
+    rotate: 7deg;
+  }
+  35% {
+    rotate: -5deg;
+  }
+  55% {
+    rotate: 3deg;
+  }
+  75% {
+    rotate: -1.5deg;
+  }
+  100% {
+    rotate: 0deg;
+  }
+}
+.lanterns.tone-loss:not(.dim) .lan-smoke {
+  stroke: #9aa7b4;
+  stroke-width: 4;
+  animation: lan-smoke 1.8s ease-out forwards;
+}
+@keyframes lan-smoke {
+  0% {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  25% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -16px;
+  }
+}
+:root[data-theme="paper"] .lan-halo {
+  mix-blend-mode: multiply;
 }
 
 .stage-status {
@@ -1138,6 +1369,7 @@ button:disabled {
 }
 .tab-body {
   padding: 14px 16px 20px;
+  overflow-x: auto;
 }
 
 .empty {
@@ -1572,6 +1804,12 @@ button:disabled {
 @media (max-width: 560px) {
   .stage-overlay {
     top: 20%;
+  }
+  .stage-overlay.lantern-overlay {
+    top: 0;
+  }
+  .lanterns {
+    width: min(360px, 82%);
   }
   .bars li {
     grid-template-columns: 80px 1fr 56px;

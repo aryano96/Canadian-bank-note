@@ -4,6 +4,7 @@ import type { PublicRound } from "../api/types.ts";
 import type { Phase } from "../game/useGame.ts";
 import { useI18n } from "../i18n/index.tsx";
 import { Stage } from "../stage/Stage.tsx";
+import { Lanterns, type LanternTone } from "./Lanterns.tsx";
 
 interface Props {
   config: GameConfig;
@@ -26,12 +27,12 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
   const finalOf = (r: PublicRound) => (r.status === "won" ? r.cashOutAt! : r.crashPoint!);
   const shown = running ? live : lastSettled && phase !== "placing" ? finalOf(lastSettled) : 100;
   const heat = running ? Math.min(1, Math.log(live / 100) / Math.log(20)) : 0;
-  const tone =
-    running && round?.golden
-      ? "gold"
-      : running || phase === "placing" || !lastSettled
-        ? ""
-        : `${lastSettled.status === "won" ? "win" : "loss"} ${settled ? "" : "dim"}`;
+  // Lanterns glow gold while the multiplier climbs, then turn green on a cash-out and red on a crash.
+  const tone: LanternTone = running || phase === "placing" || !lastSettled ? "gold" : lastSettled.status === "won" ? "win" : "loss";
+  const dim = !running && phase !== "placing" && !!lastSettled && !settled;
+  // Rises fast at first so the light visibly grows even in short rounds: about half at 2x, nearly full by 10x.
+  const glow = running ? Math.sqrt(Math.min(1, Math.log(live / 100) / Math.log(20))) : 0;
+  const sparkle = (running && (round!.golden || live >= 500)) || settled?.status === "won";
 
   let status = "";
   if (phase === "placing") status = t("stage.starting");
@@ -57,9 +58,7 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
       <div className="holo-stripe" aria-hidden="true" />
       <Stage config={config} round={round} phase={phase} theme={theme} reducedMotion={reducedMotion} onTick={onTick} />
 
-      {round?.golden && (running || settled) && (
-        <div className="golden-banner">{t("stage.goldenBanner", { boost })}</div>
-      )}
+      {round?.golden && (running || settled) && <div className="golden-banner">{t("stage.goldenBanner", { boost })}</div>}
 
       {goldenNext ? (
         <div className="stage-overlay golden-next">
@@ -70,19 +69,21 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
           <div className="stage-status">{t("stage.goldenNextBody", { boost })}</div>
         </div>
       ) : (
-      <div className="stage-overlay">
-        <div className={`multiplier mono ${tone}`} data-testid="multiplier">
-          {mult(shown)}
+        <div className="stage-overlay lantern-overlay">
+          <Lanterns text={mult(shown)} tone={tone} glow={glow} dim={dim} sparkle={sparkle} resultKey={settled?.id} />
+          {status && <div className="stage-status">{status}</div>}
+          {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
+          {settled?.status === "won" && (
+            <div className="stage-potential mono win">
+              {t("stage.profit", {
+                amount: money(settled.payout - settled.wager),
+              })}
+            </div>
+          )}
+          {settled?.status === "won" && settled.bonus > 0 && (
+            <div className="bonus-chip mono">{t("stage.bonusChip", { boost, amount: money(settled.bonus) })}</div>
+          )}
         </div>
-        {status && <div className="stage-status">{status}</div>}
-        {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
-        {settled?.status === "won" && (
-          <div className="stage-potential mono win">{t("stage.profit", { amount: money(settled.payout - settled.wager) })}</div>
-        )}
-        {settled?.status === "won" && settled.bonus > 0 && (
-          <div className="bonus-chip mono">{t("stage.bonusChip", { boost, amount: money(settled.bonus) })}</div>
-        )}
-      </div>
       )}
 
       {settled && (
