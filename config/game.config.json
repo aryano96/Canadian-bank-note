@@ -32,7 +32,7 @@
   "ui": {
     "defaultLocale": "en",
     "locales": ["en", "fr"],
-    "theme": "polymer",
+    "theme": "night",
     "historySize": 20
   }
 }

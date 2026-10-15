@@ -7,13 +7,13 @@ Place a wager and the press starts printing. The multiplier climbs along an engr
 
 ![Round in progress](docs/screenshots/running.png)
 
-| Cashed out | Crashed | Verified in the browser |
+| Cashed out | Crashed | Autobet |
 |---|---|---|
-| ![Cashed out](docs/screenshots/cashed-out.png) | ![Crashed](docs/screenshots/crashed.png) | ![Verify](docs/screenshots/verify.png) |
+| ![Cashed out](docs/screenshots/cashed-out.png) | ![Crashed](docs/screenshots/crashed.png) | ![Autobet](docs/screenshots/autobet.png) |
 
-| Stats and house check | Français, Paper theme | Mobile |
-|---|---|---|
-| ![Stats](docs/screenshots/stats.png) | ![French](docs/screenshots/french-paper.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Verified in the browser | Stats and house check | Français | Mobile |
+|---|---|---|---|
+| ![Verify](docs/screenshots/verify.png) | ![Stats](docs/screenshots/stats.png) | ![French](docs/screenshots/french.png) | ![Mobile](docs/screenshots/mobile.png) |
 
 ## Quick start
 
@@ -43,20 +43,21 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 ## What's in it
 
 **MVP requirements**
-- Place bet and Cash out controls, with keyboard support (Space).
+- Bet and Cash out controls in a casino-style sidebar, with keyboard support (Space).
 - Balance, wager, and a live multiplier with a potential-payout readout.
 - Server-side account balance with a full ledger.
 - A random crash point between 1.00x and the configured maximum, settled by the server.
 
 **Optional enhancements built**
-- Auto cash-out.
+- Auto cash-out ("Cashout At") with a live "Profit on Win" preview.
+- Autobet mode: number of bets, increase or reset the wager on a win or loss, and stop on a profit or loss limit.
 - Configurable bets: presets, ½ / 2× / Max, min/max limits.
 - Session history and a "My bets" table.
 - Golden Loonie bonus rounds: every 10th round boosts profit by 10%.
 - Stats tab with a balance chart and a live RTP simulation.
 - Accessibility: screen-reader announcements, reduced-motion support, focus styles and forced-colors support.
 - Full English and French localization.
-- Two visual themes: Polymer (dark) and Paper (light).
+- Two visual themes: Night (dark slate with a green bet button, the default) and Paper (light, engraved).
 - Synthesized sound effects.
 - **Provably fair** rounds that any player can verify in their own browser.
 
@@ -122,7 +123,7 @@ Everything is in [`config/game.config.json`](config/game.config.json). It is val
 | `betting.minAutoCashOut` | `1.01` | Lowest auto target |
 | `bonus.goldenRoundEvery` / `goldenMultiplierBoost` | `10` / `0.1` | Golden Loonie rounds |
 | `account.startingBalance` / `topUpAmount` | cents | Demo credits |
-| `ui.locales` / `defaultLocale` / `theme` | `en, fr` / `en` / `polymer` | Presentation |
+| `ui.locales` / `defaultLocale` / `theme` | `en, fr` / `en` / `night` | Presentation |
 
 Environment variables: `PORT`, `STORE=memory|sqlite`, `DB_PATH`, `CONFIG_PATH`, `STATIC_DIR`.
 
@@ -151,8 +152,9 @@ Errors always look like `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "
 2. **Lose one:** let a round run until COUNTERFEIT DETECTED appears.
 3. **Fairness:** open My bets, press Verify, and show both checks passing in the browser.
 4. **Idempotence:** run `npm test` and show the "retrying a bet with the same key does not double charge" test.
-5. **Bilingual and themes:** press Français, then Paper.
-6. **Economy:** open Stats. The simulated RTP sits on the expected RTP. Change `houseEdge` to `0.05`, restart, and show that it follows.
+5. **Autobet:** switch to Auto, set 5 bets at 1.50×, and start it.
+6. **Bilingual and themes:** press Français, then Paper.
+7. **Economy:** open Stats. The simulated RTP sits on the expected RTP. Change `houseEdge` to `0.05`, restart, and show that it follows.
 
 ---
 

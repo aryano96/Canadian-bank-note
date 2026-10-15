@@ -17,12 +17,14 @@ import { I18nProvider, useI18n } from "./i18n/index.tsx";
 import { prefersReducedMotion, usePref } from "./lib/prefs.ts";
 import { sound } from "./lib/sound.ts";
 
+const THEMES = ["night", "paper"];
 const MILESTONES = [200, 500, 1000, 2500, 5000, 10000];
 type Tab = "bets" | "fairness" | "stats";
 
 function Game({ config }: { config: GameConfig }) {
   const { t, mult, money } = useI18n();
-  const [theme, setTheme] = usePref("theme", config.ui.theme);
+  const [savedTheme, setTheme] = usePref("theme", config.ui.theme);
+  const theme = THEMES.includes(savedTheme) ? savedTheme : "night";
   const [soundOn, setSoundOn] = usePref("sound", true);
   const [helpSeen, setHelpSeen] = usePref("helpSeen", false);
   const [helpOpen, setHelpOpen] = useState(!helpSeen);
@@ -117,33 +119,35 @@ function Game({ config }: { config: GameConfig }) {
       />
 
       <main className="layout" id="play">
-        <div className="main-col">
-          <HistoryStrip history={game.history} />
-          <StagePanel
-            config={config}
-            round={game.round}
-            phase={game.phase}
-            live={live}
-            theme={theme}
-            reducedMotion={reducedMotion}
-            onTick={onTick}
-          />
+        <div className="game-shell">
+          <aside className="controls">
+            <BetPanel
+              config={config}
+              player={game.player}
+              phase={game.phase}
+              round={game.round}
+              live={live}
+              onBet={game.placeBet}
+              onCashOut={game.cashOut}
+              onTopUp={game.topUp}
+              registerPrimary={(fn) => {
+                primaryRef.current = fn;
+              }}
+            />
+          </aside>
+          <div className="game-area">
+            <HistoryStrip history={game.history} />
+            <StagePanel
+              config={config}
+              round={game.round}
+              phase={game.phase}
+              live={live}
+              theme={theme}
+              reducedMotion={reducedMotion}
+              onTick={onTick}
+            />
+          </div>
         </div>
-        <aside className="side-col">
-          <BetPanel
-            config={config}
-            player={game.player}
-            phase={game.phase}
-            round={game.round}
-            live={live}
-            onBet={game.placeBet}
-            onCashOut={game.cashOut}
-            onTopUp={game.topUp}
-            registerPrimary={(fn) => {
-              primaryRef.current = fn;
-            }}
-          />
-        </aside>
 
         <section className="panel tabs-panel">
           <div className="tabs" role="tablist">

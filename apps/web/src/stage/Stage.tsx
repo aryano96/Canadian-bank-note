@@ -46,8 +46,12 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    palette.current = readPalette(canvas);
-    bg.current = null;
+    // The parent applies data-theme in its own effect, which runs after ours; read on the next frame.
+    const id = requestAnimationFrame(() => {
+      palette.current = readPalette(canvas);
+      bg.current = null;
+    });
+    return () => cancelAnimationFrame(id);
   }, [theme]);
 
   // Celebrate or shatter when a round settles.
@@ -143,7 +147,7 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
       const sy = (m: number) => PAD.top + plotH - ((m - 100) / (scale.current.y - 100)) * plotH;
 
       // Grid and axis labels.
-      ctx.font = "500 11px 'JetBrains Mono', ui-monospace, monospace";
+      ctx.font = "600 12px Inter, system-ui, sans-serif";
       ctx.fillStyle = p.text;
       ctx.strokeStyle = p.grid;
       ctx.lineWidth = 1;
@@ -156,7 +160,7 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
         ctx.stroke();
         ctx.textAlign = "right";
         ctx.textBaseline = "middle";
-        ctx.fillText(`${(m / 100).toFixed(m % 100 === 0 ? 0 : 1)}x`, PAD.left - 8, y);
+        ctx.fillText(`${(m / 100).toFixed(1)}×`, PAD.left - 8, y);
       }
       const xStep = niceStep(scale.current.x / 1000) * 1000;
       ctx.textAlign = "center";
@@ -168,10 +172,11 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
       if (round && endMs > 0) {
         const golden = round.golden;
         const lost = round.status === "lost";
+        const won = round.status === "won";
         const grad = ctx.createLinearGradient(PAD.left, 0, width - PAD.right, 0);
-        if (lost) {
-          grad.addColorStop(0, p.loss);
-          grad.addColorStop(1, p.loss);
+        if (lost || won) {
+          grad.addColorStop(0, lost ? p.loss : p.win);
+          grad.addColorStop(1, lost ? p.loss : p.win);
         } else if (golden) {
           grad.addColorStop(0, p.gold);
           grad.addColorStop(1, p.holoC);
@@ -199,12 +204,12 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
         ctx.closePath();
         ctx.clip();
         const fill = ctx.createLinearGradient(0, ty, 0, sy(100));
-        fill.addColorStop(0, lost ? p.loss : golden ? p.gold : p.holoB);
+        fill.addColorStop(0, lost ? p.loss : won ? p.win : golden ? p.gold : p.holoB);
         fill.addColorStop(1, "transparent");
-        ctx.globalAlpha = 0.22;
+        ctx.globalAlpha = 0.4;
         ctx.fillStyle = fill;
         ctx.fillRect(PAD.left, ty, tx - PAD.left, sy(100) - ty);
-        ctx.globalAlpha = 0.18;
+        ctx.globalAlpha = 0.08;
         ctx.strokeStyle = lost ? p.loss : golden ? p.gold : p.holoA;
         ctx.lineWidth = 0.7;
         for (let x = PAD.left - plotH; x < tx; x += 6) {
@@ -220,9 +225,9 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
         ctx.lineJoin = "round";
         ctx.lineCap = "round";
         ctx.strokeStyle = grad;
-        ctx.shadowColor = lost ? p.loss : golden ? p.gold : p.holoB;
-        ctx.shadowBlur = 18;
-        ctx.lineWidth = 4;
+        ctx.shadowColor = lost ? p.loss : won ? p.win : golden ? p.gold : p.holoB;
+        ctx.shadowBlur = 10;
+        ctx.lineWidth = 5;
         ctx.beginPath();
         pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
         ctx.stroke();

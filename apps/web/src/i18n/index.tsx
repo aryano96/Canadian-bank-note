@@ -56,7 +56,7 @@ export function I18nProvider({ config, children }: { config: GameConfig; childre
       t: (key, vars) =>
         (catalog[key] ?? en[key]).replace(/\{(\w+)\}/g, (_, name: string) => String(vars?.[name] ?? `{${name}}`)),
       money: (minor) => formatMoney(minor, config, tag),
-      mult: (h) => `${multFmt.format(h / 100)}x`,
+      mult: (h) => `${multFmt.format(h / 100)}×`,
       percent: (ratio, digits = 1) =>
         new Intl.NumberFormat(tag, { style: "percent", minimumFractionDigits: digits, maximumFractionDigits: digits }).format(ratio),
       number: (n) => numberFmt.format(n),
