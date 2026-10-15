@@ -1,0 +1,13 @@
+{
+  "name": "@mint-rush/engine",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure, framework-free game rules: config schema, provably fair RNG, multiplier curve and round settlement.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  }
+}
