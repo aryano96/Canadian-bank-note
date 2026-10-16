@@ -3,7 +3,7 @@
 **A provably fair crash game themed on Canadian banknote security printing.**
 Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
-Place a wager and the press starts printing. The multiplier is painted on a trio of paper sky lanterns over an engraved guilloché backdrop. They float up and glow brighter gold as it climbs, flash green when you cash out and burn red when it crashes. Cash out before the press jams to win wager × multiplier. If it jams first, the stamp reads **CRASHED** and the wager is lost.
+Place a wager and three paper sky lanterns lift off over an engraved guilloché backdrop. The multiplier is painted on the big one. The lanterns float higher and glow brighter gold as it climbs, flash green when you cash out, and turn red and drop when it crashes. Cash out in time to win wager × multiplier. If it crashes first, the stamp reads **CRASHED** and the wager is lost.
 
 ![Round in progress](docs/screenshots/running.png)
 
@@ -15,9 +15,9 @@ Place a wager and the press starts printing. The multiplier is painted on a trio
 |---|---|---|
 | ![Currencies](docs/screenshots/currencies.png) | ![Verify](docs/screenshots/verify.png) | ![Stats](docs/screenshots/stats.png) |
 
-| Français | Mobile |
-|---|---|
-| ![French](docs/screenshots/french.png) | ![Mobile](docs/screenshots/mobile.png) |
+| Golden Loonie round | Français | Mobile |
+|---|---|---|
+| ![Golden Loonie round](docs/screenshots/golden.png) | ![French](docs/screenshots/french.png) | ![Mobile](docs/screenshots/mobile.png) |
 
 ## Quick start
 
@@ -71,6 +71,13 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 - Two visual themes: Night (dark slate with a green bet button, the default) and Paper (light, engraved).
 - Synthesized sound effects.
 - **Provably fair** rounds that any player can verify in their own browser.
+
+**Look and feel**
+- Sky lanterns instead of a graph: gold while rising, green on a cash-out, red on a crash. Embers and far-off lanterns stream past faster as the multiplier grows.
+- The multiplier starts slow and keeps speeding up, so long rounds feel like a rush.
+- Golden Loonie rounds: a meter counts down to them, the next one gets a shining Bet button, and wins rain gold coins and sparkles.
+- Rounds end with a CASHED OUT or CRASHED stamp.
+- On phones, the Bet button sits right under the game with the settings below it.
 
 ## Architecture
 

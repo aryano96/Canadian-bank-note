@@ -18,8 +18,8 @@ export const fr: Record<MessageKey, string> = {
   "header.themeLabel": "Changer le thème visuel",
   "header.help": "Comment jouer",
 
-  "stage.idle": "Placez une mise pour lancer la presse",
-  "stage.starting": "Encrage des plaques…",
+  "stage.idle": "Placez une mise pour allumer les lanternes",
+  "stage.starting": "Allumage des lanternes…",
   "stage.cashedOut": "Encaissé à {multiplier}",
   "stage.crashed": "Écrasé à {multiplier}",
   "stage.stampWin": "Encaissé",
@@ -129,9 +129,9 @@ export const fr: Record<MessageKey, string> = {
 
   "help.title": "Comment jouer",
   "help.step1": "Choisissez une mise et appuyez sur Miser. Elle est déduite de votre solde.",
-  "help.step2": "La presse démarre et le multiplicateur grimpe à partir de 1,00x.",
+  "help.step2": "Les lanternes s'envolent et le multiplicateur grimpe à partir de 1,00x. Plus il monte, plus elles s'élèvent et brillent.",
   "help.step3": "Encaissez à tout moment pour gagner mise × multiplicateur.",
-  "help.step4": "Si la presse s'enraye (écrasement) avant votre encaissement, la mise est perdue.",
+  "help.step4": "Si les lanternes virent au rouge (écrasement) avant votre encaissement, la mise est perdue.",
   "help.step5": "Réglez l'encaissement auto pour fixer une cible. Toutes les {every} manches, un Huard doré offre un bonus sur le gain.",
   "help.close": "Compris",
 
