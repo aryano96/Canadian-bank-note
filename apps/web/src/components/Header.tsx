@@ -13,10 +13,11 @@ interface Props {
   theme: string;
   onTheme: (t: string) => void;
   onHelp: () => void;
+  onDeposit: () => void;
   balanceFlash: "up" | "down" | null;
 }
 
-export function Header({ currencies, currency, balances, onCurrency, currencyLocked, sound, onSound, theme, onTheme, onHelp, balanceFlash }: Props) {
+export function Header({ currencies, currency, balances, onCurrency, currencyLocked, sound, onSound, theme, onTheme, onHelp, onDeposit, balanceFlash }: Props) {
   const { t, locale, setLocale } = useI18n();
   return (
     <header className="topbar">
@@ -35,6 +36,7 @@ export function Header({ currencies, currency, balances, onCurrency, currencyLoc
           onChange={onCurrency}
           locked={currencyLocked}
           flash={balanceFlash}
+          onDeposit={onDeposit}
         />
 
         <nav className="header-actions" aria-label="Settings">

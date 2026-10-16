@@ -97,6 +97,10 @@ export class Api {
     return this.request("PUT", "/api/seed", { clientSeed });
   }
 
+  deposit(amount: number, currency: string): Promise<{ state: PlayerState }> {
+    return this.mutate("POST", "/api/deposit", { amount, currency });
+  }
+
   topUp(currency: string): Promise<PlayerState> {
     return this.request("POST", "/api/topup", { currency });
   }

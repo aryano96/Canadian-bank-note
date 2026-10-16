@@ -120,6 +120,20 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settledKey]);
 
+  // A round the player already left crashes in a smaller puff of red, without the big shake.
+  const prevPhase = useRef(phase);
+  useEffect(() => {
+    const was = prevPhase.current;
+    prevPhase.current = phase;
+    const canvas = canvasRef.current;
+    if (was !== "watching" || phase !== "result" || !palette.current || !canvas || reducedMotion) return;
+    const p = palette.current;
+    const { x, y } = lanternCentre(canvas, canvas.clientWidth, canvas.clientHeight);
+    particles.current.push(...burst(x, y, [p.loss, p.ink], 30, 4.5));
+    shake.current = 3;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   useEffect(() => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
@@ -169,7 +183,10 @@ export function Stage({ config, round, phase, theme, reducedMotion, onTick }: Pr
       if (bg.current) ctx.drawImage(bg.current, 0, 0, width, height);
 
       // Report the live multiplier; the lanterns draw it, the canvas only adds the backdrop and effects.
-      const running = round && (phase === "running" || phase === "cashing" || phase === "placing") && round.status === "running";
+      // A cashed-out round keeps climbing while the player watches it play out.
+      const running =
+        round &&
+        (((phase === "running" || phase === "cashing" || phase === "placing") && round.status === "running") || phase === "watching");
       let lift = 0;
       if (round && running) {
         const m = multiplierAt(Math.max(0, serverNow() - round.startedAt), config);

@@ -11,7 +11,9 @@
       "topUpAmount": 100000,
       "minBet": 10,
       "maxBet": 100000,
-      "presets": [100, 500, 1000, 5000]
+      "presets": [100, 500, 1000, 5000],
+      "depositPresets": [2500, 5000, 10000, 50000],
+      "maxDeposit": 1000000
     },
     {
       "code": "USD",
@@ -23,7 +25,9 @@
       "topUpAmount": 100000,
       "minBet": 10,
       "maxBet": 100000,
-      "presets": [100, 500, 1000, 5000]
+      "presets": [100, 500, 1000, 5000],
+      "depositPresets": [2500, 5000, 10000, 50000],
+      "maxDeposit": 1000000
     },
     {
       "code": "GBP",
@@ -35,7 +39,9 @@
       "topUpAmount": 80000,
       "minBet": 10,
       "maxBet": 80000,
-      "presets": [100, 500, 1000, 5000]
+      "presets": [100, 500, 1000, 5000],
+      "depositPresets": [2000, 5000, 10000, 40000],
+      "maxDeposit": 800000
     },
     {
       "code": "BTC",
@@ -47,7 +53,9 @@
       "topUpAmount": 1000000,
       "minBet": 100,
       "maxBet": 1000000,
-      "presets": [1000, 5000, 10000, 50000]
+      "presets": [1000, 5000, 10000, 50000],
+      "depositPresets": [250000, 500000, 1000000, 5000000],
+      "maxDeposit": 10000000
     },
     {
       "code": "ETH",
@@ -59,7 +67,9 @@
       "topUpAmount": 30000000,
       "minBet": 1000,
       "maxBet": 30000000,
-      "presets": [10000, 50000, 100000, 500000]
+      "presets": [10000, 50000, 100000, 500000],
+      "depositPresets": [5000000, 10000000, 30000000, 100000000],
+      "maxDeposit": 300000000
     }
   ],
   "betting": {
@@ -73,6 +83,14 @@
     "growthRatePerSecond": 0.08,
     "accelerationPerSecond2": 0.003,
     "resultHoldMs": 2500
+  },
+  "table": {
+    "playOutAfterCashOut": true,
+    "simulatedPlayers": {
+      "enabled": true,
+      "min": 6,
+      "max": 12
+    }
   },
   "bonus": {
     "enabled": true,
