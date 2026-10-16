@@ -101,7 +101,8 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
 
   // When an autobet round settles: adjust the wager, check stop rules, queue the next bet.
   useEffect(() => {
-    if (!autobet || !round || round.status === "running" || !player) return;
+    // A cashed-out round plays on to its crash point; the next autobet waits for it.
+    if (!autobet || !round || round.status === "running" || !player || phase === "watching") return;
     if (!autoRounds.current.has(round.id) || handled.current.has(round.id)) return;
     handled.current.add(round.id);
 
@@ -127,7 +128,7 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
     const timer = window.setTimeout(() => betRef.current(next, target), AUTOBET_GAP_MS);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round?.id, round?.status, autobet === null]);
+  }, [round?.id, round?.status, autobet === null, phase === "watching"]);
 
   // ---- primary action -------------------------------------------------------
   const primary = () => {
@@ -142,12 +143,15 @@ export function BetPanel({ config, player, phase, round, live, onBet, onCashOut,
   let label: string;
   if (phase === "placing") label = t("bet.placing");
   else if (phase === "cashing") label = t("bet.cashingOut");
+  else if (phase === "watching" && mode === "manual") label = t("bet.waitNext");
   else if (running && mode === "manual") label = t("bet.cashOut", { amount: money(computePayout(round!.wager, live, round!.golden, config).payout) });
   else if (mode === "auto") label = autobet ? t("auto.stop") : t("auto.start");
   else label = player?.nextRoundGolden ? t("bet.placeGolden") : t("bet.place");
 
   const primaryClass =
-    running && mode === "manual"
+    phase === "watching" && mode === "manual"
+      ? "waiting"
+      : running && mode === "manual"
       ? round?.golden
         ? "golden"
         : "cash"

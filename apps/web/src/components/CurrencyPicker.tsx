@@ -9,6 +9,7 @@ interface Props {
   onChange: (code: string) => void;
   locked: boolean;
   flash: "up" | "down" | null;
+  onDeposit: () => void;
 }
 
 export function CoinIcon({ currency }: { currency: Currency }) {
@@ -20,7 +21,7 @@ export function CoinIcon({ currency }: { currency: Currency }) {
 }
 
 /** The wallet in the top bar: the selected balance, and a menu of every wallet. */
-export function CurrencyPicker({ currencies, currency, balances, onChange, locked, flash }: Props) {
+export function CurrencyPicker({ currencies, currency, balances, onChange, locked, flash, onDeposit }: Props) {
   const { t, money, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -72,6 +73,9 @@ export function CurrencyPicker({ currencies, currency, balances, onChange, locke
       <span className="wallet-coin" aria-hidden="true">
         {selected.code}
       </span>
+      <button className="deposit-btn" onClick={onDeposit} data-testid="deposit">
+        {t("header.deposit")}
+      </button>
 
       {open && (
         <div className="wallet-menu" role="listbox" aria-label={t("header.currency")}>

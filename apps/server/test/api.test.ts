@@ -164,6 +164,34 @@ describe.each(stores)("API with %s store", (_, makeStore) => {
     expect((await call("POST", "/api/topup")).body.error.code).toBe("TOP_UP_NOT_NEEDED");
   });
 
+  it("deposits demo credits into one wallet, once per idempotency key", async () => {
+    const key = idem();
+    const first = await call("POST", "/api/deposit", { amount: 5000 }, key);
+    expect(first.status).toBe(200);
+    expect(first.body.state.balances.CAD).toBe(config.account.startingBalance + 5000);
+    const replay = await call("POST", "/api/deposit", { amount: 5000 }, key);
+    expect(replay.body.state.balances.CAD).toBe(config.account.startingBalance + 5000);
+    expect((await call("GET", "/api/me")).body.balances.CAD).toBe(config.account.startingBalance + 5000);
+
+    const btc = config.currencies.find((c) => c.code === "BTC")!;
+    const deposit = await call("POST", "/api/deposit", { amount: 1000, currency: "BTC" }, idem());
+    expect(deposit.body.state.balances).toMatchObject({ BTC: btc.startingBalance + 1000, CAD: config.account.startingBalance + 5000 });
+  });
+
+  it("rejects deposits outside the configured limits", async () => {
+    expect((await call("POST", "/api/deposit", { amount: config.account.maxDeposit + 1 }, idem())).body.error.code).toBe("DEPOSIT_INVALID");
+    expect((await call("POST", "/api/deposit", { amount: 0 }, idem())).body.error.code).toBe("VALIDATION_FAILED");
+    expect((await call("POST", "/api/deposit", { amount: 100, currency: "DOGE" }, idem())).body.error.code).toBe("VALIDATION_FAILED");
+    expect((await call("POST", "/api/deposit", { amount: 100 })).body.error.code).toBe("IDEMPOTENCY_KEY_REQUIRED");
+  });
+
+  it("allows a deposit while a round is running", async () => {
+    await call("POST", "/api/bets", { wager: 1000 }, idem());
+    const res = await call("POST", "/api/deposit", { amount: 2000 }, idem());
+    expect(res.body.state.balances.CAD).toBe(config.account.startingBalance - 1000 + 2000);
+    expect(res.body.state.activeRound).not.toBeNull();
+  });
+
   it("keeps history and stats consistent with the ledger", async () => {
     for (let i = 0; i < 5; i++) {
       await call("POST", "/api/bets", { wager: 100, autoCashOut: 2 }, idem());

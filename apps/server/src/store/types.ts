@@ -40,7 +40,7 @@ export interface RoundRecord {
   settledAt: number | null;
 }
 
-export type LedgerType = "bet" | "payout" | "topup";
+export type LedgerType = "bet" | "payout" | "topup" | "deposit";
 
 export interface LedgerEntry {
   accountId: string;

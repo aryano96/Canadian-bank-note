@@ -181,6 +181,29 @@ export class GameService {
     return this.state(accountId);
   }
 
+  /** Adds demo credits to one wallet. Allowed any time, even mid-round, since the wager is already taken. */
+  deposit(accountId: string, amount: number, currency?: string): PlayerState {
+    const { currency: cur, account: rules } = this.rules(currency);
+    if (!Number.isSafeInteger(amount) || amount < 1 || amount > rules.maxDeposit) {
+      throw new GameError("DEPOSIT_INVALID", `Deposits must be between 1 and ${rules.maxDeposit}`);
+    }
+    this.store.transaction(() => {
+      const account = this.mustGetAccount(accountId);
+      const balance = (account.balances[cur.code] ?? 0) + amount;
+      this.store.updateAccount({ ...account, balances: { ...account.balances, [cur.code]: balance } });
+      this.store.addLedgerEntry({
+        accountId,
+        roundId: null,
+        type: "deposit",
+        currency: cur.code,
+        amount,
+        balanceAfter: balance,
+        createdAt: this.now(),
+      });
+    });
+    return this.state(accountId);
+  }
+
   // ---- rounds ---------------------------------------------------------
 
   async placeBet(accountId: string, wager: number, autoCashOut: Hundredths | null, currency?: string): Promise<PublicRound> {

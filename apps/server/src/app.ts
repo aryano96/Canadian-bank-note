@@ -23,6 +23,7 @@ const betBody = z.object({
   autoCashOut: z.number().min(1).nullable().optional(),
   currency: z.string().optional(),
 });
+const depositBody = z.object({ amount: z.number().int().positive(), currency: z.string().optional() });
 const currencyBody = z.object({ currency: z.string().optional() }).default({});
 const currencyQuery = z.object({ currency: z.string().optional() });
 const seedBody = z.object({ clientSeed: z.string().trim().min(1).max(64) });
@@ -150,6 +151,14 @@ export async function buildApp(opts: AppOptions) {
   });
 
   app.post("/api/topup", async (req) => game.topUp((await auth(req)).id, currencyBody.parse(req.body ?? {}).currency));
+
+  app.post("/api/deposit", async (req, reply) => {
+    const account = await auth(req);
+    return idempotency.run(account.id, req, reply, () => {
+      const body = depositBody.parse(req.body);
+      return { state: game.deposit(account.id, body.amount, body.currency) };
+    });
+  });
 
   app.get("/api/simulate", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req) => {
     const q = simulateQuery.parse(req.query);

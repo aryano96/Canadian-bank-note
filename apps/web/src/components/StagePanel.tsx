@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { GameConfig } from "@mint-rush/engine";
+import type { CrowdPlayer, GameConfig } from "@mint-rush/engine";
 import { computePayout } from "@mint-rush/engine";
 import type { PublicRound } from "../api/types.ts";
 import type { Phase } from "../game/useGame.ts";
@@ -36,30 +36,68 @@ interface Props {
   onTick: (m: number) => void;
   /** Normal rounds left before the next Golden round (0: the next one is Golden). */
   roundsUntilGolden: number | null;
+  /** Id of the round that kept playing after the player cashed out. */
+  playedOut: string | null;
+  /** The simulated players on this round, for the cash-out tags that float off the lanterns. */
+  crowd: CrowdPlayer[];
 }
 
-export function StagePanel({ config, round, phase, live, theme, reducedMotion, onTick, roundsUntilGolden }: Props) {
+/** Four spots off to the sides, clear of the lanterns in the middle. */
+const TAG_SLOTS = [
+  { left: "3%", top: "40%" },
+  { right: "3%", top: "48%" },
+  { left: "3%", top: "58%" },
+  { right: "3%", top: "66%" },
+];
+
+/** The latest few simulated cash-outs, shown as tags that drift up and fade. */
+function CrowdTags({ crowd, live }: { crowd: CrowdPlayer[]; live: number }) {
+  const { t, mult } = useI18n();
+  // Each player keeps one spot, and back-to-back cash-outs land in different spots.
+  const order = [...crowd].sort((a, b) => a.target - b.target || a.name.localeCompare(b.name));
+  const recent = order.filter((p) => p.target <= live).slice(-3);
+  return (
+    <div className="crowd-tags" aria-hidden="true">
+      {recent.map((p) => (
+        <span key={p.name} className="crowd-tag" style={TAG_SLOTS[order.indexOf(p) % TAG_SLOTS.length]}>
+          {t("crowd.tag", { name: p.name, multiplier: mult(p.target) })}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function StagePanel({ config, round, phase, live, theme, reducedMotion, onTick, roundsUntilGolden, playedOut, crowd }: Props) {
   const { t, mult, money } = useI18n();
   const running = round?.status === "running" && (phase === "running" || phase === "cashing");
+  // After a cash-out the round plays on to its crash point.
+  const watching = phase === "watching" && round?.status === "won";
+  const climbing = running || watching;
   const settled = round && round.status !== "running" && phase === "result" ? round : null;
   const lastSettled = round && round.status !== "running" ? round : null;
+  const wasPlayedOut = !!round && round.id === playedOut;
 
-  const finalOf = (r: PublicRound) => (r.status === "won" ? r.cashOutAt! : r.crashPoint!);
-  const shown = running ? live : lastSettled && phase !== "placing" ? finalOf(lastSettled) : 100;
-  const heat = running ? Math.min(1, Math.log(live / 100) / Math.log(20)) : 0;
+  const finalOf = (r: PublicRound) => (r.status === "won" && !wasPlayedOut ? r.cashOutAt! : r.crashPoint!);
+  const shown = climbing ? live : lastSettled && phase !== "placing" ? finalOf(lastSettled) : 100;
+  const heat = climbing ? Math.min(1, Math.log(live / 100) / Math.log(20)) : 0;
   // Lanterns glow gold while the multiplier climbs, then turn green on a cash-out and red on a crash.
-  const tone: LanternTone = running || phase === "placing" || !lastSettled ? "gold" : lastSettled.status === "won" ? "win" : "loss";
-  const dim = !running && phase !== "placing" && !!lastSettled && !settled;
+  // A round the player left still crashes red; their win stays on the badge and the stamp.
+  const tone: LanternTone =
+    climbing || phase === "placing" || !lastSettled ? "gold" : lastSettled.status === "won" && !wasPlayedOut ? "win" : "loss";
+  const dim = !climbing && phase !== "placing" && !!lastSettled && !settled;
   // Rises fast at first so the change shows even in short rounds: about half at 2x, nearly full by 10x.
   const climb = (m: number) => Math.sqrt(Math.min(1, Math.max(0, Math.log(m / 100) / Math.log(20))));
-  const glow = running ? climb(live) : 0;
+  const glow = climbing ? climb(live) : 0;
   // The lanterns float up with the multiplier, stay where the round ended, and sink back for the next one.
-  const rise = phase === "placing" || (!running && !lastSettled) ? 0 : climb(shown);
-  const sparkle = (running && (round!.golden || live >= 500)) || settled?.status === "won";
+  const rise = phase === "placing" || (!climbing && !lastSettled) ? 0 : climb(shown);
+  const sparkle = (climbing && (round!.golden || live >= 500)) || (settled?.status === "won" && !wasPlayedOut);
+  const showBadge = wasPlayedOut && (watching || !!settled);
 
   let status = "";
   if (phase === "placing") status = t("stage.starting");
   else if (running) status = round!.autoCashOut ? t("stage.autoArmed", { multiplier: mult(round!.autoCashOut) }) : "";
+  else if (watching) status = t("stage.stillRunning");
+  else if (lastSettled?.status === "won" && wasPlayedOut) status = t("stage.crashed", { multiplier: mult(lastSettled.crashPoint!) });
   else if (lastSettled?.status === "won") status = t("stage.cashedOut", { multiplier: mult(lastSettled.cashOutAt!) });
   else if (lastSettled?.status === "lost") status = t("stage.crashed", { multiplier: mult(lastSettled.crashPoint!) });
   else status = t("stage.idle");
@@ -73,8 +111,8 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
 
   return (
     <section
-      className={`stage ${round?.golden && (running || settled) ? "is-golden" : ""} ${running ? "is-running" : ""} ${
-        settled?.status === "lost" ? "is-crashed" : ""
+      className={`stage ${round?.golden && (climbing || settled) ? "is-golden" : ""} ${climbing ? "is-running" : ""} ${
+        settled?.status === "lost" || (settled && wasPlayedOut) ? "is-crashed" : ""
       }`}
       style={{ "--heat": heat, "--warmth": warmth } as React.CSSProperties}
       aria-label="Game"
@@ -82,7 +120,13 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
       <div className="holo-stripe" aria-hidden="true" />
       <Stage config={config} round={round} phase={phase} theme={theme} reducedMotion={reducedMotion} onTick={onTick} />
 
-      {round?.golden && (running || settled) && <div className="golden-banner">{t("stage.goldenBanner", { boost })}</div>}
+      {round?.golden && (climbing || settled) && <div className="golden-banner">{t("stage.goldenBanner", { boost })}</div>}
+      {showBadge && (
+        <div className={`cashout-badge ${round!.golden ? "below-banner" : ""}`} data-testid="cashout-badge">
+          ✓ {t("stage.youCashedOut", { multiplier: mult(round!.cashOutAt!), amount: money(round!.payout - round!.wager) })}
+        </div>
+      )}
+      {climbing && !reducedMotion && <CrowdTags crowd={crowd} live={live} />}
 
       {goldenNext ? (
         <div className="stage-overlay golden-next">
@@ -95,7 +139,7 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
       ) : (
         <div className="stage-overlay lantern-overlay" ref={liftRoom.overlay}>
           <div
-            className={`lantern-lift ${running ? "is-climbing" : ""}`}
+            className={`lantern-lift ${climbing ? "is-climbing" : ""}`}
             ref={liftRoom.lift}
             // Smaller as it rises, as if drifting away.
             style={{ transform: `translateY(${-rise * liftRoom.room}px) scale(${1 - rise * 0.15})` }}
@@ -105,7 +149,13 @@ export function StagePanel({ config, round, phase, live, theme, reducedMotion, o
           <div className="stage-readout">
             {status && <div className="stage-status">{status}</div>}
             {running && <div className="stage-potential mono">{t("stage.potential", { amount: money(potential) })}</div>}
-            {settled?.status === "won" && (
+            {watching && <div className="stage-potential mono win">{t("stage.payout", { amount: money(round!.payout) })}</div>}
+            {settled?.status === "won" && wasPlayedOut && (
+              <div className="stage-potential mono">
+                {t("stage.leftAt", { cashOut: mult(settled.cashOutAt!), crash: mult(settled.crashPoint!) })}
+              </div>
+            )}
+            {settled?.status === "won" && !wasPlayedOut && (
               <div className="stage-potential mono win">
                 {t("stage.profit", {
                   amount: money(settled.payout - settled.wager),

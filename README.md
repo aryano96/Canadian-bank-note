@@ -5,13 +5,19 @@ Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
 **▶ Play it now: [aryano96.github.io/Canadian-bank-note](https://aryano96.github.io/Canadian-bank-note/)** (demo credits only, no sign-up, works on phones)
 
-Place a wager and three paper sky lanterns lift off over an engraved guilloché backdrop. The multiplier is painted on the big one. The lanterns float higher and glow brighter gold as it climbs, flash green when you cash out, and turn red and drop when it crashes. Cash out in time to win wager × multiplier. If it crashes first, the stamp reads **CRASHED** and the wager is lost.
+Place a wager and three paper sky lanterns lift off over an engraved guilloché backdrop. The multiplier is painted on the big one. The lanterns float higher and glow brighter gold as it climbs, and turn red and drop when it crashes. Cash out in time to win wager × multiplier. If it crashes first, the stamp reads **CRASHED** and the wager is lost.
+
+You never play alone: a **Live bets** table beside the stage fills each round with other players who bet and cash out at their own targets. When you cash out, the round keeps climbing to its real crash point, so you see how high it went while the rest of the table rides it out.
 
 ![Round in progress](docs/screenshots/running.png)
 
-| Cashed out | Crashed | Autobet |
+| Cashed out, round still running | It went on to crash | Crashed with you still in |
 |---|---|---|
-| ![Cashed out](docs/screenshots/cashed-out.png) | ![Crashed](docs/screenshots/crashed.png) | ![Autobet](docs/screenshots/autobet.png) |
+| ![Cashed out while the round keeps going](docs/screenshots/cashed-out.png) | ![The round you left, played out](docs/screenshots/played-out.png) | ![Crashed](docs/screenshots/crashed.png) |
+
+| Deposit | Autobet | |
+|---|---|---|
+| ![Deposit demo credits](docs/screenshots/deposit.png) | ![Autobet](docs/screenshots/autobet.png) | |
 
 | Currencies | Verified in the browser | Stats and house check |
 |---|---|---|
@@ -47,7 +53,7 @@ npm run build:demo               # apps/web/dist-demo
 Other commands:
 
 ```bash
-npm test                         # 54 tests: engine, economy, API on both stores
+npm test                         # 64 tests: engine, economy, simulated players, API on both stores
 npm run typecheck
 npm run simulate -- 1000000 2    # long-run economics of the current config
 ```
@@ -58,6 +64,7 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 - Bet and Cash out controls in a casino-style sidebar, with keyboard support (Space).
 - Balance, wager, and a live multiplier with a potential-payout readout.
 - Server-side account balance with a full ledger.
+- A **Deposit** button next to the balance adds demo credits to the selected wallet, with quick amounts and a per-deposit limit from the config. Deposits are idempotent and land in the ledger.
 - A random crash point between 1.00x and the configured maximum, settled by the server.
 
 **Optional enhancements built**
@@ -66,6 +73,7 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 - Five wallets: Canadian dollar, US dollar, British pound, Bitcoin and Ethereum. Each has its own balance, bet limits, presets and stats, and crypto amounts show all 8 decimals. Pick one from the wallet menu in the top bar.
 - Configurable bets: presets, ½ / 2× / Max, min/max limits.
 - Session history and a "My bets" table.
+- A shared-table feel: the round plays on after you cash out, and a **Live bets** panel lists simulated players with their bets, cash-outs and losses. They are generated from the round's committed seed hash, so a round always shows the same table, they reveal nothing about the crash point, and they never touch your balance. The panel is labelled "Simulated".
 - Golden Loonie bonus rounds: every 10th round boosts profit by 10%.
 - Stats tab with a balance chart and a live RTP simulation.
 - Accessibility: screen-reader announcements, reduced-motion support, focus styles and forced-colors support.
@@ -78,7 +86,7 @@ npm run simulate -- 1000000 2    # long-run economics of the current config
 - Sky lanterns instead of a graph: gold while rising, green on a cash-out, red on a crash. Embers and far-off lanterns stream past faster as the multiplier grows.
 - The multiplier starts slow and keeps speeding up, so long rounds feel like a rush.
 - Golden Loonie rounds: a meter counts down to them, the next one gets a shining Bet button, and wins rain gold coins and sparkles.
-- Rounds end with a CASHED OUT or CRASHED stamp.
+- Rounds end with a CASHED OUT or CRASHED stamp. After a cash-out, your win stays pinned in green while the lanterns keep climbing, and other players' cash-outs float off the lanterns as small tags.
 - On phones, the Bet button sits right under the game with the settings below it.
 
 ## Architecture
@@ -140,7 +148,9 @@ Everything is in [`config/game.config.json`](config/game.config.json). It is val
 | `rng.maxMultiplier` | `1000` | Highest possible crash point |
 | `timing.growthRatePerSecond` | `0.08` | Starting speed of the multiplier |
 | `timing.accelerationPerSecond2` | `0.003` | How fast the climb speeds up (2x at ≈6.9 s, 10x at ≈17 s) |
-| `currencies[]` | CAD, USD, GBP, BTC, ETH | One wallet each, with `symbol`, `kind` (fiat or crypto), `minorUnits`, `startingBalance`, `topUpAmount`, `minBet`, `maxBet` and `presets`. Amounts are in the smallest unit (cents, pence, satoshis). The first entry is the default. |
+| `currencies[]` | CAD, USD, GBP, BTC, ETH | One wallet each, with `symbol`, `kind` (fiat or crypto), `minorUnits`, `startingBalance`, `topUpAmount`, `minBet`, `maxBet`, `presets`, `depositPresets` and `maxDeposit`. Amounts are in the smallest unit (cents, pence, satoshis). The first entry is the default. |
+| `table.playOutAfterCashOut` | `true` | Keep the round climbing to its crash point after you cash out |
+| `table.simulatedPlayers` | `enabled`, `min 6`, `max 12` | The Live bets table: on or off, and how many players join each round |
 | `betting.minAutoCashOut` | `1.01` | Lowest auto target |
 | `bonus.goldenRoundEvery` / `goldenMultiplierBoost` | `10` / `0.1` | Golden Loonie rounds |
 | `ui.locales` / `defaultLocale` / `theme` | `en, fr` / `en` / `night` | Presentation |
@@ -161,6 +171,7 @@ Environment variables: `PORT`, `STORE=memory|sqlite`, `DB_PATH`, `CONFIG_PATH`, 
 | `GET` | `/api/rounds/:id`, `/api/history` | Seeds are revealed only after settlement |
 | `GET` | `/api/stats?currency=BTC` | Lifetime numbers for one wallet |
 | `PUT` | `/api/seed` | `{ clientSeed }`, between rounds only |
+| `POST` | `/api/deposit` | `{ amount, currency? }`, up to that wallet's `maxDeposit`, requires `Idempotency-Key` |
 | `POST` | `/api/topup` | `{ currency? }`, only when that wallet is below its minimum bet |
 | `GET` | `/api/simulate?target=2&rounds=200000` | Monte Carlo house check |
 | `GET` | `/api/config`, `/api/health` | |

@@ -1,13 +1,15 @@
-import { withCurrency, type GameConfig } from "@mint-rush/engine";
+import { crowdFor, withCurrency, type GameConfig } from "@mint-rush/engine";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api/client.ts";
 import type { PublicRound } from "./api/types.ts";
 import { BetPanel } from "./components/BetPanel.tsx";
 import { BetsTable } from "./components/BetsTable.tsx";
+import { DepositDialog } from "./components/DepositDialog.tsx";
 import { FairnessPanel } from "./components/FairnessPanel.tsx";
 import { Header } from "./components/Header.tsx";
 import { HelpDialog } from "./components/HelpDialog.tsx";
 import { HistoryStrip } from "./components/HistoryStrip.tsx";
+import { LiveBets } from "./components/LiveBets.tsx";
 import { StagePanel } from "./components/StagePanel.tsx";
 import { StatsPanel } from "./components/StatsPanel.tsx";
 import { Toast } from "./components/Toast.tsx";
@@ -37,6 +39,7 @@ function Game({ base, config, onCurrency }: GameProps) {
   const [soundOn, setSoundOn] = usePref("sound", true);
   const [helpSeen, setHelpSeen] = usePref("helpSeen", false);
   const [helpOpen, setHelpOpen] = useState(!helpSeen);
+  const [depositOpen, setDepositOpen] = useState(false);
   const [tab, setTab] = useState<Tab>("bets");
   const [verifying, setVerifying] = useState<PublicRound | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -69,6 +72,9 @@ function Game({ base, config, onCurrency }: GameProps) {
         else sound.win();
         pulse("up");
         setAnnouncement(t("a11y.won", { multiplier: mult(e.round.cashOutAt!), amount: money(e.round.payout) }));
+      } else if (e.type === "playedOut") {
+        sound.crashAfar();
+        setAnnouncement(t("a11y.playedOut", { multiplier: mult(e.round.crashPoint!) }));
       } else {
         sound.lose();
         setAnnouncement(t("a11y.lost", { multiplier: mult(e.round.crashPoint!) }));
@@ -79,7 +85,8 @@ function Game({ base, config, onCurrency }: GameProps) {
 
   const game = useGame(base, onEvent);
   const running = game.round?.status === "running" && (game.phase === "running" || game.phase === "cashing");
-  const busy = running || game.phase === "placing";
+  const watching = game.phase === "watching";
+  const busy = running || watching || game.phase === "placing";
   const player = useMemo(() => game.player && { ...game.player, balance: game.player.balances[code] ?? 0 }, [game.player, code]);
 
   // A round resumed after a reload plays in its own currency.
@@ -87,7 +94,16 @@ function Game({ base, config, onCurrency }: GameProps) {
   useEffect(() => {
     if (roundCurrency && roundCurrency !== code) onCurrency(roundCurrency);
   }, [roundCurrency, code, onCurrency]);
-  const live = useLiveMultiplier(game.round, running, config);
+  const live = useLiveMultiplier(game.round, running || watching, config);
+
+  // The table shows the current round, or between rounds the players waiting for the next one.
+  // Both come from the committed seed hash, so the next round's table is the one you then join.
+  const between = game.phase === "idle" || game.phase === "placing" || game.phase === "loading";
+  const tableRound = between ? null : game.round;
+  const tableConfig = useMemo(() => (tableRound ? withCurrency(base, tableRound.currency) : config), [base, config, tableRound]);
+  const tableSeed = tableRound?.serverSeedHash ?? game.player?.nextServerSeedHash;
+  const crowd = useMemo(() => (tableSeed ? crowdFor(tableSeed, tableConfig) : []), [tableSeed, tableConfig]);
+  const showTable = config.table.simulatedPlayers.enabled;
 
   const onTick = useCallback(
     (m: number) => {
@@ -137,6 +153,7 @@ function Game({ base, config, onCurrency }: GameProps) {
         theme={theme}
         onTheme={setTheme}
         onHelp={() => setHelpOpen(true)}
+        onDeposit={() => setDepositOpen(true)}
         balanceFlash={flash}
       />
 
@@ -169,8 +186,11 @@ function Game({ base, config, onCurrency }: GameProps) {
               reducedMotion={reducedMotion}
               onTick={onTick}
               roundsUntilGolden={game.player?.roundsUntilGolden ?? null}
+              playedOut={game.playedOut}
+              crowd={tableRound ? crowd : []}
             />
           </div>
+          {showTable && <LiveBets config={tableConfig} crowd={crowd} round={tableRound} phase={game.phase} live={live} />}
         </div>
 
         <section className="panel tabs-panel">
@@ -227,6 +247,20 @@ function Game({ base, config, onCurrency }: GameProps) {
         vars={{ min: mult(config.betting.minAutoCashOut * 100) }}
       />
       <HelpDialog open={helpOpen} onClose={closeHelp} config={config} />
+      <DepositDialog
+        open={depositOpen}
+        config={config}
+        onClose={() => setDepositOpen(false)}
+        onDeposit={async (amount) => {
+          const ok = await game.deposit(amount, code);
+          if (ok) {
+            pulse("up");
+            sound.win();
+            setAnnouncement(t("deposit.done", { amount: money(amount) }));
+          }
+          return ok;
+        }}
+      />
     </div>
   );
 }

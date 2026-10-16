@@ -16,8 +16,16 @@ export const currencySchema = z
     minBet: z.number().int().positive(),
     maxBet: z.number().int().positive(),
     presets: z.array(z.number().int().positive()).min(1).max(6),
+    /** Quick amounts in the Deposit dialog. Defaults to the top-up amount. */
+    depositPresets: z.array(z.number().int().positive()).min(1).max(6).optional(),
+    /** Largest single deposit. Defaults to ten top-ups. */
+    maxDeposit: z.number().int().positive().optional(),
   })
-  .refine((c) => c.minBet <= c.maxBet, { message: "minBet must be <= maxBet", path: ["minBet"] });
+  .refine((c) => c.minBet <= c.maxBet, { message: "minBet must be <= maxBet", path: ["minBet"] })
+  .refine((c) => (c.depositPresets ?? []).every((p) => p <= (c.maxDeposit ?? c.topUpAmount * 10)), {
+    message: "depositPresets must not exceed maxDeposit",
+    path: ["depositPresets"],
+  });
 
 export type Currency = z.infer<typeof currencySchema>;
 
@@ -45,6 +53,20 @@ const baseSchema = z
       goldenRoundEvery: z.number().int().min(2),
       goldenMultiplierBoost: z.number().min(0).max(1),
     }),
+    /** The shared-table feel: the round plays on after a cash-out, with simulated players beside you. */
+    table: z
+      .object({
+        playOutAfterCashOut: z.boolean().default(true),
+        simulatedPlayers: z
+          .object({
+            enabled: z.boolean().default(true),
+            min: z.number().int().min(0).max(50).default(6),
+            max: z.number().int().min(0).max(50).default(12),
+          })
+          .refine((p) => p.min <= p.max, { message: "min must be <= max", path: ["min"] })
+          .default({}),
+      })
+      .default({}),
     ui: z.object({
       defaultLocale: z.string(),
       locales: z.array(z.string()).min(1),
@@ -72,7 +94,12 @@ function applyCurrency<C extends BaseConfig>(config: C, cur: Currency) {
   return {
     ...config,
     currency: { code: cur.code, symbol: cur.symbol, name: cur.name, kind: cur.kind, minorUnits: cur.minorUnits },
-    account: { startingBalance: cur.startingBalance, topUpAmount: cur.topUpAmount },
+    account: {
+      startingBalance: cur.startingBalance,
+      topUpAmount: cur.topUpAmount,
+      depositPresets: cur.depositPresets ?? [cur.topUpAmount],
+      maxDeposit: cur.maxDeposit ?? cur.topUpAmount * 10,
+    },
     betting: { minAutoCashOut, minBet: cur.minBet, maxBet: cur.maxBet, presets: cur.presets },
   };
 }

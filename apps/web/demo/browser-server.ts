@@ -94,6 +94,10 @@ async function handle(method: string, url: URL, headers: Headers, body: unknown,
     if (!seed || seed.length > 64) throw new GameError("VALIDATION_FAILED", "clientSeed: 1 to 64 characters");
     return game.setClientSeed(id, seed);
   }
+  if (path === "/api/deposit" && method === "POST") {
+    const { amount, currency } = body as { amount: number; currency?: string };
+    return once(async () => ({ state: game.deposit(id, amount, currency) }));
+  }
   if (path === "/api/topup" && method === "POST") return game.topUp(id, (body as { currency?: string } | undefined)?.currency);
   throw new GameError("ROUND_NOT_FOUND", "Not found");
 }

@@ -14,7 +14,7 @@ Have a round already running, with the lanterns rising.
 
 Cash out at about 1.5×.
 
-> "Cash out and they flash green: you're safe. Wait too long..."
+> "Cash out and your win is pinned in green, but the round doesn't stop. The lanterns keep climbing to where it really crashes, and the Live bets table shows everyone else cashing out or riding it, so you always find out what you left on the table. Wait too long..."
 
 Let the next round crash.
 
@@ -42,8 +42,8 @@ Press Français on the way out.
 
 | Criterion | Points | What to show |
 |---|---|---|
-| Creativity and polish | 20 | Rising sky lanterns, colour states (gold, green, red), drifting embers, the Golden Loonie round, Cashed out and Crashed stamps, sound, the Night and Paper themes |
-| Backend | 10 | Server-side balances and ledger, idempotent bets and cash-outs, SSE streaming, SQLite with migrations, provably fair RNG, 54 tests |
+| Creativity and polish | 20 | Rising sky lanterns, colour states (gold, green, red), the Live bets table and the round playing on after a cash-out, drifting embers, the Golden Loonie round, Cashed out and Crashed stamps, sound, the Night and Paper themes |
+| Backend | 10 | Server-side balances and ledger, idempotent bets and cash-outs, SSE streaming, SQLite with migrations, provably fair RNG, idempotent deposits, 64 tests |
 | Modularity and config | 10 | `packages/engine` is pure rules with no I/O, plus `apps/server` and `apps/web`. One `config/game.config.json` drives the edge, the curve, limits, bonus rounds and currencies |
 | Presentation | 10 | This script, the README, and a demo that runs anywhere (`npm run build:demo` needs no server) |
 
@@ -53,7 +53,7 @@ Press Français on the way out.
 - **Golden Loonie:** every 10th round adds a 10% profit boost.
 - **Curve:** it starts slow and keeps speeding up. 2× takes about 7 seconds and 10× about 17.
 - **Max multiplier:** 1000×.
-- **Tests:** 54, covering the engine, the economy, and the API on both the in-memory and SQLite stores.
+- **Tests:** 64, covering the engine, the economy, the simulated players, and the API on both the in-memory and SQLite stores.
 
 ## Likely judge questions
 
@@ -68,6 +68,12 @@ Yes. Change `houseEdge` in `config/game.config.json` and restart. The Stats tab'
 
 **"Why these colours?"**
 Gold reads as reward and temptation, so it rises with the multiplier. Green reads as safe and won, and red as danger and loss. The player knows the outcome before reading the number.
+
+**"Are the other players real?"**
+No, and the panel says "Simulated". They are generated from the round's committed seed hash, so they reveal nothing about the crash point, a round always shows the same table, and they never touch your balance. They show what a busy shared table feels like.
+
+**"Can I add money?"**
+Yes, demo credits only. The Deposit button next to the balance credits the selected wallet up to a per-deposit limit set in the config. Deposits use the same idempotency keys as bets and land in the ledger.
 
 **"Does it scale past one player?"**
 Rounds are per player and settled on the server. The store sits behind an interface with in-memory and SQLite versions, so a shared database can be swapped in without touching game logic.

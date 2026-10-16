@@ -1,9 +1,10 @@
-import type { GameConfig } from "@mint-rush/engine";
+import { elapsedFor, type GameConfig } from "@mint-rush/engine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../api/client.ts";
 import type { PlayerState, PublicRound, RoundResult } from "../api/types.ts";
+import { serverNow } from "./useLiveMultiplier.ts";
 
-export type Phase = "loading" | "idle" | "placing" | "running" | "cashing" | "result";
+export type Phase = "loading" | "idle" | "placing" | "running" | "cashing" | "watching" | "result";
 
 export interface GameError {
   code: string;
@@ -13,13 +14,20 @@ export interface GameError {
 export type GameEvent =
   | { type: "started"; round: PublicRound }
   | { type: "won"; round: PublicRound }
-  | { type: "lost"; round: PublicRound };
+  | { type: "lost"; round: PublicRound }
+  /** A round the player already cashed out of has now reached its crash point. */
+  | { type: "playedOut"; round: PublicRound };
 
 /**
  * Client-side round state machine. The server is the authority on money and
  * outcomes; this hook only orchestrates requests and keeps the UI in sync.
  *
  *   idle → placing → running → (cashing →) result → idle
+ *
+ * After a cash-out the round keeps playing to its crash point, like a shared
+ * table where everyone else is still in:
+ *
+ *   running → (cashing →) watching → result → idle
  */
 export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
   const [phase, setPhase] = useState<Phase>("loading");
@@ -27,9 +35,12 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
   const [round, setRound] = useState<PublicRound | null>(null);
   const [history, setHistory] = useState<PublicRound[]>([]);
   const [error, setError] = useState<GameError | null>(null);
+  /** Id of the last round that kept playing after the player cashed out. */
+  const [playedOut, setPlayedOut] = useState<string | null>(null);
 
   const watchAbort = useRef<AbortController | null>(null);
   const resultTimer = useRef<number>();
+  const watchTimer = useRef<number>();
   const settledIds = useRef(new Set<string>());
   const eventRef = useRef(onEvent);
   eventRef.current = onEvent;
@@ -52,14 +63,32 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
       watchAbort.current?.abort();
       setRound(settled);
       setPlayer(state);
-      setPhase("result");
-      setHistory((h) => [settled, ...h.filter((r) => r.id !== settled.id)].slice(0, config.ui.historySize));
       eventRef.current({ type: settled.status === "won" ? "won" : "lost", round: settled });
-      window.clearTimeout(resultTimer.current);
-      resultTimer.current = window.setTimeout(
-        () => setPhase((p) => (p === "result" ? "idle" : p)),
-        config.timing.resultHoldMs,
-      );
+
+      const finish = () => {
+        setPhase("result");
+        // The crash point joins the history only once the round reaches it, so it never spoils the play-out.
+        setHistory((h) => [settled, ...h.filter((r) => r.id !== settled.id)].slice(0, config.ui.historySize));
+        window.clearTimeout(resultTimer.current);
+        resultTimer.current = window.setTimeout(
+          () => setPhase((p) => (p === "result" ? "idle" : p)),
+          config.timing.resultHoldMs,
+        );
+      };
+
+      const crashAt = settled.startedAt + elapsedFor(settled.crashPoint!, config);
+      const playOut = config.table.playOutAfterCashOut && settled.status === "won" && settled.crashPoint! > settled.cashOutAt!;
+      if (!playOut || crashAt <= serverNow()) {
+        setPlayedOut(null);
+        return finish();
+      }
+      setPlayedOut(settled.id);
+      setPhase("watching");
+      window.clearTimeout(watchTimer.current);
+      watchTimer.current = window.setTimeout(() => {
+        eventRef.current({ type: "playedOut", round: settled });
+        finish();
+      }, crashAt - serverNow());
     },
     [config],
   );
@@ -101,6 +130,8 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
     return () => {
       cancelled = true;
       watchAbort.current?.abort();
+      window.clearTimeout(watchTimer.current);
+      window.clearTimeout(resultTimer.current);
     };
   }, [follow, refreshHistory, fail]);
 
@@ -145,6 +176,19 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
     }
   }, [phase, round, settle, fail]);
 
+  const deposit = useCallback(
+    async (amount: number, currency: string) => {
+      try {
+        setPlayer((await api.deposit(amount, currency)).state);
+        return true;
+      } catch (err) {
+        fail(err);
+        return false;
+      }
+    },
+    [fail],
+  );
+
   const topUp = useCallback(async (currency: string) => {
     try {
       setPlayer(await api.topUp(currency));
@@ -171,11 +215,13 @@ export function useGame(config: GameConfig, onEvent: (e: GameEvent) => void) {
     player,
     round,
     history,
+    playedOut,
     error,
     clearError: () => setError(null),
     placeBet,
     cashOut,
     topUp,
+    deposit,
     setClientSeed,
   };
 }

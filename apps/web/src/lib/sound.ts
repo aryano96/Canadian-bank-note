@@ -77,6 +77,12 @@ class Sound {
     this.tone(70, 0.05, 0.6, "square", 0.06);
   }
 
+  /** A soft, distant thud: the round crashed after the player had already cashed out. */
+  crashAfar() {
+    this.stopHum();
+    this.tone(98, 0, 0.4, "triangle", 0.06);
+  }
+
   stopHum() {
     if (!this.hum || !this.ctx) return;
     const { osc, gain } = this.hum;
