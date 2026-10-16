@@ -3,6 +3,8 @@
 **A provably fair crash game themed on Canadian banknote security printing.**
 Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
+**▶ Play it now: [aryano96.github.io/Canadian-bank-note](https://aryano96.github.io/Canadian-bank-note/)** (demo credits only, no sign-up, works on phones)
+
 Place a wager and three paper sky lanterns lift off over an engraved guilloché backdrop. The multiplier is painted on the big one. The lanterns float higher and glow brighter gold as it climbs, flash green when you cash out, and turn red and drop when it crashes. Cash out in time to win wager × multiplier. If it crashes first, the stamp reads **CRASHED** and the wager is lost.
 
 ![Round in progress](docs/screenshots/running.png)
@@ -36,7 +38,7 @@ npm run build && npm start      # http://localhost:8787
 docker build -t mint-rush . && docker run -p 8787:8787 -v mint-data:/data mint-rush
 ```
 
-To build a static, server-less demo (the game service runs inside the page, for hosting on any static site):
+The public demo above is this static, server-less build (the game service runs inside the page, and each player's balance stays in their own browser). Every push to `main` redeploys it to GitHub Pages through `.github/workflows/pages.yml`. To build it yourself:
 
 ```bash
 npm run build:demo               # apps/web/dist-demo
