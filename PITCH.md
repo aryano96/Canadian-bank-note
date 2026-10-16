@@ -74,6 +74,6 @@ Rounds are per player and settled on the server. The store sits behind an interf
 
 ## Before you present
 
-1. Run `npm run build && npm start` and open http://localhost:8787. Or use the static demo from `npm run build:demo`.
+1. Run `npm run build && npm start` and open http://localhost:8787. Or open the public demo at https://aryano96.github.io/Canadian-bank-note/.
 2. Play one round first so My bets has a row to verify.
 3. Keep a terminal open with `npm test` ready for the idempotency question.
