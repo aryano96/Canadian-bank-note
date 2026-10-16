@@ -16,8 +16,8 @@ export const en = {
   "header.themeLabel": "Switch visual theme",
   "header.help": "How to play",
 
-  "stage.idle": "Place a bet to start the press",
-  "stage.starting": "Inking the plates…",
+  "stage.idle": "Place a bet to light the lanterns",
+  "stage.starting": "Lighting the lanterns…",
   "stage.cashedOut": "Cashed out at {multiplier}",
   "stage.crashed": "Crashed at {multiplier}",
   "stage.stampWin": "Cashed out",
@@ -127,9 +127,9 @@ export const en = {
 
   "help.title": "How to play",
   "help.step1": "Choose a wager and press Bet. It is deducted from your balance.",
-  "help.step2": "The press starts printing and the multiplier climbs from 1.00x.",
+  "help.step2": "The lanterns lift off and the multiplier climbs from 1.00x. The higher it goes, the higher they float and the brighter they glow.",
   "help.step3": "Cash out any time to win wager × multiplier.",
-  "help.step4": "If the press jams (crashes) before you cash out, the wager is lost.",
+  "help.step4": "If the lanterns turn red (a crash) before you cash out, the wager is lost.",
   "help.step5": "Set Auto cash-out to lock in a target. Every {every} rounds is a Golden Loonie with a profit bonus.",
   "help.close": "Got it",
 
