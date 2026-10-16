@@ -57,6 +57,8 @@ Press Français on the way out.
 
 ## Likely judge questions
 
+The full list, grouped by rubric category, is in [JUDGE-QA.md](JUDGE-QA.md).
+
 **"How do I know the crash point wasn't picked after I bet?"**
 The server commits to `SHA-256(serverSeed)` before you bet. The crash point is `HMAC-SHA256(serverSeed, clientSeed:nonce)`, and you can change your client seed. After the round, Verify checks both in your browser with Web Crypto.
 

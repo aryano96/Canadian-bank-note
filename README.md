@@ -180,7 +180,7 @@ Errors always look like `{ "error": { "code": "INSUFFICIENT_FUNDS", "message": "
 
 ## Demo script (2 minutes)
 
-The full spoken pitch, a rubric map and answers to likely judge questions are in [PITCH.md](PITCH.md).
+The full spoken pitch, a rubric map and answers to likely judge questions are in [PITCH.md](PITCH.md). A fuller set of judge questions, grouped by rubric category with short answers, is in [JUDGE-QA.md](JUDGE-QA.md).
 
 1. **Play:** bet $5 and cash out around 1.5x. Point out the payout readout, the green lanterns and the CASHED OUT stamp; the bets table shows where it would have crashed.
 2. **Lose one:** let a round run until CRASHED appears.
