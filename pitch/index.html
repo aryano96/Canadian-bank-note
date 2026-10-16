@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mint Rush: ThunderHacks 2026</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..800;1,400..800&family=DM+Sans:wght@400..700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #0B141C; overflow: hidden; }
+  #stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #stage > section { position: absolute; inset: 0; width: 1920px; height: 1080px; box-sizing: border-box; overflow: hidden; }
+  #stage > section:not(.on) { display: none !important; }
+  #stage h1, #stage h2, #stage h3, #stage p, #stage ul, #stage table { margin: 0; }
+  #stage a { color: inherit; text-decoration: none; }
+  #stage table { border-collapse: collapse; width: 100%; }
+  #stage th, #stage td { padding: 0.35em 0.6em; border-bottom: 1px solid rgba(169,184,196,0.35); vertical-align: top; }
+  #stage aside { display: none; }
+  #notes { position: fixed; left: 0; right: 0; bottom: 0; max-height: 35vh; overflow: auto; background: rgba(11,20,28,0.94); color: #F3EEE2; font: 18px/1.5 'DM Sans', Arial, sans-serif; padding: 16px 24px; display: none; }
+  body.notes #notes { display: block; }
+  #nav { position: fixed; right: 16px; bottom: 12px; font: 14px 'DM Sans', Arial, sans-serif; color: #8A99A6; user-select: none; }
+  #nav button { background: #1B2A36; color: #F3EEE2; border: 0; border-radius: 6px; padding: 6px 12px; margin-left: 6px; cursor: pointer; font: inherit; }
+  body.notes #nav { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+<section id="cover" data-transition="fade" style="background:radial-gradient(circle at 72% 45%, #2A3440 0%, #111C26 60%);color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:40px">
+<img src="img/hero.png" alt="Mint Rush sky lanterns rising with the multiplier 1.63× painted on the biggest one" style="position:absolute;left:1032px;top:150px;width:760px;height:688px;object-fit:cover;border-radius:24px;box-shadow:0 24px 80px rgba(0,0,0,0.5)">
+<p style="font-size:32px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#E8B53E;width:860px">ThunderHacks 2026 · Canadian Bank Note</p>
+<h1 style="font-family:'Playfair Display', Georgia, serif;font-size:160px;font-weight:700;line-height:1.05;width:860px">Mint Rush</h1>
+<p style="font-size:44px;line-height:1.3;color:#C9D3DB;width:820px">A provably fair crash game themed on Canadian bank notes.</p>
+<p style="font-size:32px;font-weight:600;color:#E8B53E;width:860px"><a href="https://aryano96.github.io/Canadian-bank-note/">aryano96.github.io/Canadian-bank-note</a></p>
+<aside>Hi, this is Mint Rush, our entry for the Canadian Bank Note challenge. It’s live at the link on screen, so you can play along on a laptop or phone. Have a round already running, with the lanterns rising.</aside>
+</section>
+<section id="mr-hook" data-transition="fade" style="background:#F3EEE2;color:#16202A;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:48px">
+<p style="font-size:32px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#8A6412">The question</p>
+<h1 style="font-family:'Playfair Display', Georgia, serif;font-size:96px;font-weight:700;line-height:1.15;width:1500px">What if the Canadian Bank Note Company printed a crash game?</h1>
+<p style="font-size:44px;line-height:1.35;color:#3E4A55;width:1400px">Bank notes have security features so <i>you</i> can check they’re real. Mint Rush works the same way: every round can be verified in your own browser.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#6A7179">Mint Rush</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#6A7179">2</p>
+<aside>Every crash game is a number going up and a button that says Cash out. We asked what it would look like if the Canadian Bank Note Company printed one. Bank notes are designed so anyone can check they’re genuine, and we wanted a game that works the same way. Players shouldn’t have to trust us. They can check.</aside>
+</section>
+<section id="mr-colours" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">You feel the risk without reading a number</h2>
+<div style="display:flex;gap:40px">
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<img src="img/gold.png" alt="Lanterns glowing gold at 1.63× while the round climbs" style="width:528px;height:400px;object-fit:cover;border-radius:20px;border:3px solid #E8B53E">
+<h3 style="font-size:44px;font-weight:700;color:#E8B53E">Gold: climbing</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DB">Higher and brighter as the multiplier grows. Reward and temptation.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<img src="img/green.png" alt="Lanterns at 2.10× after the player cashed out, with the win shown in green" style="width:528px;height:400px;object-fit:cover;border-radius:20px;border:3px solid #4FC77A">
+<h3 style="font-size:44px;font-weight:700;color:#6FD893">Green: you’re safe</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DB">Your win is pinned in green the moment you cash out.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<img src="img/red.png" alt="Lanterns turned red and cracked after crashing at 1.09×" style="width:528px;height:400px;object-fit:cover;border-radius:20px;border:3px solid #E25B57">
+<h3 style="font-size:44px;font-weight:700;color:#F07A76">Red: it crashed</h3>
+<p style="font-size:28px;line-height:1.35;color:#C9D3DB">The lanterns turn red and drop, with a Crashed stamp.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Creativity and polish</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">3</p>
+<aside>You bet, and three paper lanterns lift off. The number is painted on the big one. The higher the multiplier, the higher they float and the brighter they burn, so you feel the risk without reading anything. Gold means it’s still climbing. Cash out and your win is pinned in green. Wait too long and they turn red and drop. Green is safe, gold is greed, red is loss, and we chose those colours on purpose. There’s always a stamp and a number too, so colour never carries the meaning alone. Demo: cash out at about 1.5×, then let the next round crash.</aside>
+</section>
+<section id="mr-playon" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">The round plays on after you cash out</h2>
+<div style="display:flex;gap:56px;align-items:start">
+<div style="width:580px;display:flex;flex-direction:column;gap:32px">
+<p style="font-size:32px;line-height:1.4;color:#C9D3DB">The lanterns keep climbing to the real crash point, so you always see what you left on the table.</p>
+<p style="font-size:32px;line-height:1.4;color:#C9D3DB">A Live bets table of simulated players cashes out or rides it around you, so a single player still feels a busy table.</p>
+<p style="font-size:28px;line-height:1.4;color:#E8B53E;font-weight:600">“You left at 1.68×. It went to 5.48×.”</p>
+</div>
+<img src="img/played-out.png" alt="Mint Rush after a cash-out at 1.68×: the round crashed at 5.48× and the Live bets panel shows other players’ results" style="width:1028px;height:650px;object-fit:contain;border-radius:16px;background:#1B2A36">
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Creativity and polish</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">4</p>
+<aside>Cash out and your win is pinned in green, but the round doesn’t stop. The lanterns keep climbing to where it really crashes, and the Live bets table shows everyone else cashing out or riding it, so you always find out what you left on the table. That “did I leave too early?” moment is what keeps people playing. If asked: the other players are simulated, and the panel says so. They’re generated from the round’s committed seed hash, so they reveal nothing about the crash point and never touch your balance.</aside>
+</section>
+<section id="mr-fair" data-transition="fade" style="background:#F3EEE2;color:#16202A;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">Is it rigged? Check it yourself</h2>
+<div style="display:flex;gap:48px;align-items:start">
+<div style="width:520px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px;background:#FBF8F1;padding:28px 32px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:32px;font-weight:700"><span style="color:#8A6412">1</span>  Commit</h3>
+<p style="font-size:26px;line-height:1.35;color:#3E4A55">Before you bet, you see the SHA-256 hash of the server seed.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#FBF8F1;padding:28px 32px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:32px;font-weight:700"><span style="color:#8A6412">2</span>  Play</h3>
+<p style="font-size:26px;line-height:1.35;color:#3E4A55">The crash point comes from HMAC-SHA256 of that seed with your own client seed.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;background:#FBF8F1;padding:28px 32px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:32px;font-weight:700"><span style="color:#8A6412">3</span>  Verify</h3>
+<p style="font-size:26px;line-height:1.35;color:#3E4A55">After the round the seed is revealed and your browser recomputes both.</p>
+</div>
+</div>
+<img src="img/verify.png" alt="Mint Rush Fairness tab: server seed hash, client seed, the crash formula and a Verify round box with both checks passing" style="width:1096px;height:620px;object-fit:contain;border-radius:16px;background:#1B2A36">
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#6A7179">Mint Rush · Backend: RNG and security</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#6A7179">5</p>
+<aside>The question every player has is whether the game is rigged. Bank notes have security features so you can check they’re real, and Mint Rush works the same way. Before you bet, we show you a hash of the server’s seed. After the round we reveal the seed, and the Verify button recomputes the crash point right here in your browser with Web Crypto, using the same engine code the server runs. You can change your client seed at any time, so we can’t pick the result after you bet. Demo: open My bets, press Verify, and show both checks passing.</aside>
+</section>
+<section id="mr-math" data-transition="fade" style="background:#E8B53E;color:#16202A;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:40px">
+<p style="font-size:32px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#3B2A05">Return to player</p>
+<h1 style="font-family:'Playfair Display', Georgia, serif;font-size:240px;font-weight:800;line-height:1">99%</h1>
+<p style="font-size:44px;line-height:1.3;width:1400px">for every cash-out strategy. Cautious or greedy, the expected return is the same.</p>
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:36px;line-height:1.4;background:#16202A;color:#F3EEE2;padding:28px 40px;border-radius:16px;width:1280px;white-space:nowrap">P(crash ≥ t) = 0.99 / t   →   t × 0.99 / t = 0.99</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#3B2A05">Mint Rush · Backend: game logic</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#3B2A05">6</p>
+<aside>Here’s why it’s fair mathematically. The house edge is 1%, so for any target t the chance of reaching it is 0.99 divided by t. Multiply by the payout t and you get 99% every time. No strategy beats another. The Stats tab simulates 200,000 rounds live to prove it, and if you change the house edge in config, the simulated return follows. The crash point is capped at 1000×.</aside>
+</section>
+<section id="mr-backend" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">Built like real money is on the line</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">Never charged twice</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Every bet, cash-out and deposit carries an idempotency key. A retry returns the original result.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">Server owns the money</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Balances live on the server, one wallet per currency, with a ledger row for every change.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">Server owns the clock</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Cash-outs are priced by server time, so the browser can’t lie about timing.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">All or nothing</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Each money move runs in a SQLite transaction, in integer units down to 8-decimal Bitcoin.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">Live and recoverable</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Rounds stream over server-sent events, and a restart settles any round left running.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#1B2A36;padding:36px;border-radius:16px;border-top:4px solid #E8B53E">
+<h3 style="font-size:32px;font-weight:700">64 automated tests</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Engine, economy and API, run against both the in-memory and the SQLite store.</p>
+</div>
+</div>
+<p style="font-size:26px;color:#A9B8C4">Also: Zod validation on every route, rate limiting, hashed session tokens, errors that never leak internals.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Backend: accounts, security, reliability</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">7</p>
+<aside>Underneath is a real backend. The server owns every balance and keeps a full ledger. Bets and cash-outs are idempotent, so a double-click or a dropped connection can never charge you twice, and there’s a test for exactly that. The server uses its own clock for cash-outs. Every money move is a database transaction, and amounts are integers in the smallest unit, so there’s no floating-point rounding. Rounds stream to the browser over server-sent events, and if the server crashes mid-round, it settles that round on restart from the stored start time and the committed crash point. Keep a terminal ready with npm test for the idempotency question.</aside>
+</section>
+<section id="mr-modules" data-transition="fade" style="background:#F3EEE2;color:#16202A;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">Three parts, one rulebook</h2>
+<div style="display:flex;gap:24px;align-items:stretch">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FBF8F1;padding:40px;border:2px solid #16202A;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#8A6412">packages/engine</p>
+<h3 style="font-size:36px;font-weight:700">Pure rules</h3>
+<p style="font-size:26px;line-height:1.4;color:#3E4A55">Provably fair RNG and game math, no I/O. The server and the in-browser verifier run the same code.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FBF8F1;padding:40px;border:1px solid #D9D2C2;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#8A6412">apps/server</p>
+<h3 style="font-size:36px;font-weight:700">Fastify API</h3>
+<p style="font-size:26px;line-height:1.4;color:#3E4A55">Node 22 and SQLite behind a store interface, so Postgres could swap in without touching the rules.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;background:#FBF8F1;padding:40px;border:1px solid #D9D2C2;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:24px;color:#8A6412">apps/web</p>
+<h3 style="font-size:36px;font-weight:700">React and canvas</h3>
+<p style="font-size:26px;line-height:1.4;color:#3E4A55">Vite, canvas lanterns, Web Audio sound, and a browser-only build on GitHub Pages.</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center;background:#16202A;color:#F3EEE2;padding:36px 44px;border-radius:16px">
+<p style="font-family:'JetBrains Mono', 'Courier New', monospace;font-size:30px;font-weight:600;color:#E8B53E;white-space:nowrap">config/game.config.json</p>
+<p style="font-size:28px;line-height:1.4;color:#C9D3DB">One file drives the house edge, curve speed, limits, currencies, bonus rounds and simulated players.</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#6A7179">Mint Rush · Modularity and configurability</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#6A7179">8</p>
+<aside>It’s a TypeScript monorepo in three parts. The engine is pure game rules with no I/O, which is why the browser can verify a round with exactly the code the server used. The server is Fastify on Node 22 with SQLite, and the store sits behind an interface with in-memory and SQLite versions. The web app is React with the lanterns drawn on canvas. Every rule lives in one config file, so changing the game never means changing code.</aside>
+</section>
+<section id="mr-config" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">Five wallets, zero code changes</h2>
+<div style="display:flex;gap:56px;align-items:start">
+<img src="img/currencies.png" alt="Mint Rush wallet menu listing CAD, USD, GBP, BTC and ETH balances" style="width:1028px;height:650px;object-fit:contain;border-radius:16px;background:#1B2A36">
+<div style="width:580px;display:flex;flex-direction:column;gap:28px">
+<p style="font-size:32px;line-height:1.4;color:#C9D3DB">CAD, USD, GBP, BTC and ETH are all defined in config. The first one listed is the default.</p>
+<table style="font-size:26px;color:#F3EEE2">
+<tr><th style="width:55%;text-align:left">Setting</th><th style="width:45%;text-align:left">Default</th></tr>
+<tr><td>House edge</td><td>1%</td></tr>
+<tr><td>Max multiplier</td><td>1000×</td></tr>
+<tr><td>Time to 2×</td><td>about 7 s</td></tr>
+<tr><td>Golden Loonie</td><td>every 10th round</td></tr>
+<tr><td>Language</td><td>EN and FR</td></tr>
+</table>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Modularity and configurability</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">9</p>
+<aside>Every rule lives in one config file: house edge, max multiplier, speed, bet limits and currencies. Here are five wallets, from Canadian dollars to Bitcoin, all defined in config, each with its own deposit presets and limits. Change the house edge and restart, and the Stats tab’s simulated return follows the new value. All the text is translated, so the whole game switches to French with one button. Demo: open the wallet menu and switch to BTC.</aside>
+</section>
+<section id="mr-polish" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">Canadian all the way through</h2>
+<div style="display:flex;gap:48px;align-items:start">
+<div style="flex:1;display:flex;flex-direction:column;gap:36px">
+<div style="display:flex;gap:48px">
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<img src="img/golden.png" alt="A Golden Loonie round with a gold frame and a +10% bonus on profit banner" style="width:634px;height:401px;object-fit:contain;border-radius:16px;background:#1B2A36">
+<h3 style="font-size:36px;font-weight:700;color:#E8B53E">Golden Loonie</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Every 10th round adds a 10% profit boost, with a progress bar counting down.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px">
+<img src="img/french.png" alt="Mint Rush with every label in French" style="width:634px;height:401px;object-fit:contain;border-radius:16px;background:#1B2A36">
+<h3 style="font-size:36px;font-weight:700;color:#E8B53E">English and French</h3>
+<p style="font-size:26px;line-height:1.4;color:#C9D3DB">Every label, toast and help page switches with one button.</p>
+</div>
+</div>
+<p style="font-size:26px;line-height:1.4;color:#A9B8C4">Also: Night and Paper themes, autobet, sound, Cashed out and Crashed stamps, reduced motion and forced-colour support.</p>
+</div>
+<div style="width:300px;display:flex;flex-direction:column;gap:14px">
+<img src="img/mobile.png" alt="Mint Rush on a phone with the Bet button directly under the lanterns" style="width:300px;height:560px;object-fit:contain;border-radius:16px;background:#1B2A36">
+<h3 style="font-size:36px;font-weight:700;color:#E8B53E">On a phone</h3>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Creativity and polish</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">10</p>
+<aside>The theme goes deeper than a skin. Every tenth round is a Golden Loonie round with a 10% profit boost. The whole game is bilingual, English and French. On a phone, the Bet button sits right under the lanterns so you never scroll to play. There are two themes, Night and Paper, autobet like real crash sites, sound, and it respects reduced-motion and high-contrast settings. Demo: press Français.</aside>
+</section>
+<section id="mr-lessons" data-transition="fade" style="background:#F3EEE2;color:#16202A;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">What building it taught us</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:28px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F1;padding:36px 40px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700">Clear beats clever</h3>
+<p style="font-size:28px;line-height:1.4;color:#3E4A55">Our first version stamped crashes “Counterfeit” on an engraved graph. It looked great but read slowly, so we moved to plain stamps and lanterns.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F1;padding:36px 40px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700">Never trust the browser</h3>
+<p style="font-size:28px;line-height:1.4;color:#3E4A55">If the browser said when it cashed out, a player could cheat. The server prices every cash-out from its own clock.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F1;padding:36px 40px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700">Config is a feature</h3>
+<p style="font-size:28px;line-height:1.4;color:#3E4A55">Four new currencies, a faster curve and simulated players were mostly config changes, not code.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F1;padding:36px 40px;border:1px solid #D9D2C2;border-radius:16px">
+<h3 style="font-size:36px;font-weight:700">Show, then build</h3>
+<p style="font-size:28px;line-height:1.4;color:#3E4A55">A mockup before each big change saved us from building the wrong thing more than once.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#6A7179">Mint Rush</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#6A7179">11</p>
+<aside>A few things we learned. A clever theme has to stay readable: Counterfeit was fun, but Crashed was clear, and in a fast game clear wins. Never trust the client with money or time. A good config file is a feature in itself. And drawing a mockup before each big change, like the move from a graph to lanterns, kept us from building the wrong thing.</aside>
+</section>
+<section id="mr-rubric" data-transition="fade" style="background:#111C26;color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<h2 style="font-family:'Playfair Display', Georgia, serif;font-size:72px;font-weight:700;line-height:1.1">How it meets the brief</h2>
+<table style="font-size:28px;color:#F3EEE2">
+<tr><th style="width:24%;text-align:left;color:#E8B53E">Criterion</th><th style="width:10%;text-align:left;color:#E8B53E">Points</th><th style="width:66%;text-align:left;color:#E8B53E">What we built</th></tr>
+<tr><td>Creativity and polish</td><td>20</td><td>Rising sky lanterns, gold, green and red states, the round that plays on, Live bets, Golden Loonie, stamps, sound, two themes</td></tr>
+<tr><td>Backend</td><td>10</td><td>Provably fair RNG, server-side balances and ledger, idempotent bets, SQLite transactions, SSE, crash recovery, 64 tests</td></tr>
+<tr><td>Modularity and config</td><td>10</td><td>Pure engine package, server and web apps, one config file for edge, curve, limits, currencies and bonuses, EN and FR</td></tr>
+<tr><td>Presentation</td><td>10</td><td>Responsive layout down to phones, clear feedback for every event, a public demo that needs no server</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1200px;font-size:24px;color:#8A99A6">Mint Rush · Judging rubric</p>
+<p style="position:absolute;right:128px;bottom:64px;width:200px;text-align:right;font-size:24px;color:#8A99A6">12</p>
+<aside>Here’s how it maps to the rubric. Creativity and polish is worth the most, and that’s where the lanterns, the colour states and the live table come in. The backend is built like real money is on the line. Every rule lives in one config file on top of a pure engine. And the presentation layer works from a wide monitor down to an iPhone SE.</aside>
+</section>
+<section id="close" data-transition="fade" style="background:radial-gradient(circle at 72% 45%, #2A3440 0%, #111C26 60%);color:#F3EEE2;font-family:'DM Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:center;gap:40px">
+<img src="img/green.png" alt="Lanterns glowing gold after a successful cash-out" style="position:absolute;left:1212px;top:200px;width:580px;height:560px;object-fit:cover;border-radius:24px">
+<h1 style="font-family:'Playfair Display', Georgia, serif;font-size:96px;font-weight:700;line-height:1.1;width:1000px">A crash game you can actually trust</h1>
+<p style="font-size:32px;font-weight:600;color:#E8B53E;width:1000px"><a href="https://aryano96.github.io/Canadian-bank-note/">aryano96.github.io/Canadian-bank-note</a></p>
+<div style="display:flex;flex-direction:column;gap:12px;width:1000px">
+<p style="font-size:24px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#A9B8C4">What’s next</p>
+<p style="font-size:32px;line-height:1.4;color:#C9D3DB">A real shared multiplayer round, sign-in and a leaderboard, holiday lantern themes, and a hosted server.</p>
+</div>
+<p style="font-size:32px;color:#A9B8C4;width:1000px">Questions? Code: github.com/aryano96/Canadian-bank-note</p>
+<aside>It’s bilingual, it works on a phone, and it has a Golden Loonie bonus every tenth round. Mint Rush: a crash game you can actually trust. Next we’d add a real shared round fed into the same Live bets panel, sign-in and a leaderboard, more lantern themes for holidays like Canada Day, and a hosted version of the full server using the Dockerfile that’s already in the repo. Thanks, happy to take questions.</aside>
+</section>
+</div>
+<div id="notes"></div>
+<div id="nav"><span id="count"></span><button id="prev" aria-label="Previous slide">‹</button><button id="next" aria-label="Next slide">›</button><button id="fs" aria-label="Full screen">⛶</button><button id="nt" aria-label="Speaker notes">Notes</button></div>
+<script>
+  const slides = [...document.querySelectorAll('#stage > section')];
+  const stage = document.getElementById('stage');
+  let i = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1));
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `scale(${s}) translate(-50%, -50%)`;
+  }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((el, k) => el.classList.toggle('on', k === i));
+    document.getElementById('count').textContent = `${i + 1} / ${slides.length}`;
+    const a = slides[i].querySelector('aside');
+    document.getElementById('notes').textContent = a ? a.textContent : '';
+    history.replaceState(null, '', '#' + (i + 1));
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', e => {
+    if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') document.body.classList.toggle('notes');
+    else if (e.key === 'f' || e.key === 'F') toggleFs();
+  });
+  function toggleFs() { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.(); }
+  document.getElementById('prev').onclick = () => show(i - 1);
+  document.getElementById('next').onclick = () => show(i + 1);
+  document.getElementById('fs').onclick = toggleFs;
+  document.getElementById('nt').onclick = () => document.body.classList.toggle('notes');
+  let x0 = null;
+  addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); x0 = null; });
+  fit(); show(i);
+</script>
+</body>
+</html>
