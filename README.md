@@ -5,6 +5,8 @@ Built for the ThunderHacks 2026 Canadian Bank Note sponsor challenge.
 
 **▶ Play it now: [aryano96.github.io/Canadian-bank-note](https://aryano96.github.io/Canadian-bank-note/)** (demo credits only, no sign-up, works on phones)
 
+**Slides: [aryano96.github.io/Canadian-bank-note/pitch](https://aryano96.github.io/Canadian-bank-note/pitch/)** (arrow keys to move, N for speaker notes, F for full screen)
+
 Place a wager and three paper sky lanterns lift off over an engraved guilloché backdrop. The multiplier is painted on the big one. The lanterns float higher and glow brighter gold as it climbs, and turn red and drop when it crashes. Cash out in time to win wager × multiplier. If it crashes first, the stamp reads **CRASHED** and the wager is lost.
 
 You never play alone: a **Live bets** table beside the stage fills each round with other players who bet and cash out at their own targets. When you cash out, the round keeps climbing to its real crash point, so you see how high it went while the rest of the table rides it out.

@@ -1,7 +1,8 @@
 name: Deploy demo to GitHub Pages
 
 # Builds the static, server-less demo (the game runs in the browser) and
-# publishes it at https://aryano96.github.io/Canadian-bank-note/.
+# publishes it at https://aryano96.github.io/Canadian-bank-note/, with the
+# presentation slides at /pitch/.
 on:
   push:
     branches: [main]
@@ -28,6 +29,7 @@ jobs:
       - run: npm ci
       - run: npm run build:demo
       - run: cp apps/web/dist-demo/demo.html apps/web/dist-demo/index.html
+      - run: cp -r pitch apps/web/dist-demo/pitch
       - uses: actions/upload-pages-artifact@v3
         with:
           path: apps/web/dist-demo
